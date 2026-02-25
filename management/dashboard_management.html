@@ -5,114 +5,39 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard Management</title>
 <style>
-body {
-    font-family: 'Arial', sans-serif;
-    background: #f0f2f5;
-    margin: 0;
-    padding: 0;
-}
-header {
-    background: #4e54c8;
-    color: white;
-    padding: 15px;
-    text-align: center;
-    font-size: 22px;
-    font-weight: bold;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-}
-nav {
-    display: flex;
-    background: white;
-    justify-content: space-around;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-nav button {
-    flex: 1;
-    padding: 12px;
-    border: none;
-    background: none;
-    font-weight: bold;
-    color: #4e54c8;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-nav button.active, nav button:hover {
-    border-bottom: 3px solid #4e54c8;
-    background: #e8e9f2;
-}
-section {
-    padding: 15px;
-}
-.tab {
-    display: none;
-}
-.tab.active {
-    display: block;
-}
+body { font-family:'Arial', sans-serif; background:#f0f2f5; margin:0; padding:0; }
+header { background:#4e54c8; color:white; padding:15px; text-align:center; font-size:22px; font-weight:bold; box-shadow:0 2px 6px rgba(0,0,0,0.2);}
+nav { display:flex; background:white; justify-content:space-around; box-shadow:0 2px 4px rgba(0,0,0,0.1);}
+nav button { flex:1; padding:12px; border:none; background:none; font-weight:bold; color:#4e54c8; cursor:pointer; transition:0.2s; }
+nav button.active, nav button:hover { border-bottom:3px solid #4e54c8; background:#e8e9f2; }
+section { padding:15px; }
+.tab { display:none; }
+.tab.active { display:block; }
 
 /* Form */
-form {
-    background: white;
-    padding: 15px;
-    border-radius: 12px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-}
-form input, form select, form textarea, form button {
-    width: 100%;
-    margin-bottom: 10px;
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 15px;
-}
-form button {
-    background: #4e54c8;
-    color: white;
-    font-weight: bold;
-    border: none;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-form button:hover {
-    background: #3b3fb8;
-}
+form { background:white; padding:15px; border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.1); margin-bottom:20px; }
+form input, form select, form textarea, form button { width:100%; margin-bottom:10px; padding:12px; border-radius:8px; border:1px solid #ccc; font-size:15px; }
+form button { background:#4e54c8; color:white; font-weight:bold; border:none; cursor:pointer; transition:0.2s; }
+form button:hover { background:#3b3fb8; }
 
-/* Table */
-.table-container {
-    overflow-x: auto;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    padding: 10px;
-}
-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-}
-th, td {
-    padding: 10px;
-    text-align: center;
-    border-bottom: 1px solid #ddd;
-}
-th {
-    background: #4e54c8;
-    color: white;
-    position: sticky;
-    top: 0;
-}
-tr:nth-child(even) {
-    background: #f9f9f9;
-}
-.status-baru { color: red; font-weight: bold; }
-.status-sudah { color: green; font-weight: bold; }
+/* Tambah Plat */
+.nopol-group { display:flex; gap:10px; margin-bottom:5px; }
+.nopol-group input { flex:1; }
+.nopol-group button { flex:none; padding:0 10px; background:red; color:white; border:none; border-radius:6px; cursor:pointer; }
+
+.table-container { overflow-x:auto; background:white; border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.1); padding:10px; }
+table { width:100%; border-collapse:collapse; font-size:14px; }
+th, td { padding:10px; text-align:center; border-bottom:1px solid #ddd; }
+th { background:#4e54c8; color:white; position:sticky; top:0; }
+tr:nth-child(even){ background:#f9f9f9; }
+.status-baru { color:red; font-weight:bold; }
+.status-sudah { color:green; font-weight:bold; }
 
 /* Responsive */
 @media(max-width:600px){
-    table, th, td { font-size: 12px; }
-    form input, form select, form textarea, form button { padding: 10px; font-size: 14px; }
-    header { font-size: 18px; }
+    table, th, td { font-size:12px; }
+    form input, form select, form textarea, form button { padding:10px; font-size:14px; }
+    header { font-size:18px; }
 }
 </style>
 </head>
@@ -121,32 +46,40 @@ tr:nth-child(even) {
 <header>Dashboard Management</header>
 
 <nav>
-    <button class="tab-btn active" data-tab="pengajuan">Pengajuan</button>
-    <button class="tab-btn" data-tab="riwayat">Riwayat</button>
-    <button class="tab-btn" data-tab="ganti">Ganti Password</button>
-    <button class="tab-btn" data-tab="logout">Log Out</button>
+<button class="tab-btn active" data-tab="pengajuan">Pengajuan</button>
+<button class="tab-btn" data-tab="riwayat">Riwayat</button>
+<button class="tab-btn" data-tab="ganti">Ganti Password</button>
+<button class="tab-btn" data-tab="logout">Log Out</button>
 </nav>
 
 <section id="content">
 
-<!-- Form Pengajuan -->
+<!-- Pengajuan -->
 <div class="tab active" id="pengajuan">
 <h3>Form Pengajuan</h3>
 <form id="formPengajuan">
-    <select name="jenis_pengajuan" required>
-        <option value="">--Pilih Jenis--</option>
-        <option value="free parkir">Free Parkir</option>
-        <option value="compliment">Compliment</option>
-        <option value="ubah plat">Ubah Plat</option>
-    </select>
-    <input type="text" name="nama" placeholder="Nama" required>
-    <input type="text" name="departement" placeholder="Departement" required>
-    <input type="text" name="nomor_plat" placeholder="Nomor Plat (pisah koma jika banyak)" required>
-    <input type="text" name="jenis_kendaraan" placeholder="Jenis Kendaraan">
-    <input type="date" name="periode_awal" required>
-    <input type="date" name="periode_akhir" required>
-    <textarea name="keterangan" placeholder="Keterangan"></textarea>
-    <button type="submit">Kirim</button>
+<select name="jenis_pengajuan" required>
+<option value="">--Pilih Jenis--</option>
+<option value="free parkir">Free Parkir</option>
+<option value="compliment">Compliment</option>
+<option value="ubah plat">Ubah Plat</option>
+</select>
+<input type="text" name="nama" placeholder="Nama" required>
+<input type="text" name="departement" placeholder="Departement" required>
+
+<div id="nopolContainer">
+  <div class="nopol-group">
+    <input type="text" name="nomor_plat[]" placeholder="Nomor Plat" required>
+    <button type="button" class="removeNopol" style="display:none;">×</button>
+  </div>
+</div>
+<button type="button" id="addNopol">+ Tambah Plat</button>
+
+<input type="text" name="jenis_kendaraan" placeholder="Jenis Kendaraan">
+<input type="date" name="periode_awal" required>
+<input type="date" name="periode_akhir" required>
+<textarea name="keterangan" placeholder="Keterangan"></textarea>
+<button type="submit">Kirim</button>
 </form>
 </div>
 
@@ -188,77 +121,116 @@ tr:nth-child(even) {
 <button id="btnLogout">Keluar</button>
 </div>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script type="module">
-import { firebaseConfig, db } from './assets/firebase-config.js';
+<script>
+const firebaseConfig = {
+apiKey: "API_KEY",
+authDomain: "PROJECT_ID.firebaseapp.com",
+projectId: "PROJECT_ID",
+storageBucket: "PROJECT_ID.appspot.com",
+messagingSenderId: "SENDER_ID",
+appId: "APP_ID"
+};
 firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+</script>
 
-// Tab switching
+<script>
+// ======= Tabs =======
 const tabs = document.querySelectorAll('.tab-btn');
 tabs.forEach(btn=>{
-    btn.addEventListener('click',()=>{
-        tabs.forEach(b=>b.classList.remove('active'));
-        document.querySelectorAll('.tab').forEach(tab=>tab.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById(btn.dataset.tab).classList.add('active');
-    });
+btn.addEventListener('click',()=>{
+    tabs.forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(tab=>tab.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+});
 });
 
-// Form Pengajuan
+// ======= Tambah Plat =======
+const addNopol = document.getElementById('addNopol');
+const nopolContainer = document.getElementById('nopolContainer');
+addNopol.addEventListener('click', ()=>{
+  const div = document.createElement('div');
+  div.classList.add('nopol-group');
+  div.innerHTML = `<input type="text" name="nomor_plat[]" placeholder="Nomor Plat" required>
+                   <button type="button" class="removeNopol">×</button>`;
+  nopolContainer.appendChild(div);
+
+  div.querySelector('.removeNopol').addEventListener('click', ()=>{
+    div.remove();
+  });
+});
+
+// ======= Form Pengajuan =======
 document.getElementById('formPengajuan').addEventListener('submit', async e=>{
-    e.preventDefault();
-    const data = Object.fromEntries(new FormData(e.target).entries());
-    data.status_admin = "belum";
-    data.timestamp = firebase.firestore.FieldValue.serverTimestamp();
+e.preventDefault();
+const formData = new FormData(e.target);
+const dataBase = Object.fromEntries(formData.entries());
 
-    const nopolArr = data.nomor_plat.split(',').map(n=>n.trim()).filter(n=>n);
-    try{
-        for(const n of nopolArr){
-            await db.collection('pengajuan').add({...data, nomor_plat: n});
-        }
-        alert("Pengajuan berhasil dikirim ke admin!");
-        e.target.reset();
-    }catch(err){
-        alert("Terjadi kesalahan: "+err);
-    }
+// Ambil semua nopol
+const nopolEls = document.querySelectorAll('input[name="nomor_plat[]"]');
+const nopolArr = Array.from(nopolEls).map(i=>i.value.trim()).filter(n=>n);
+dataBase.status_admin = "belum";
+dataBase.timestamp = firebase.firestore.FieldValue.serverTimestamp();
+
+try{
+  for(const n of nopolArr){
+    await db.collection('pengajuan').add({...dataBase, nomor_plat: n});
+  }
+  alert("Pengajuan berhasil dikirim ke admin!");
+  e.target.reset();
+  // Reset Nopol ke 1 field
+  nopolContainer.innerHTML = `<div class="nopol-group">
+    <input type="text" name="nomor_plat[]" placeholder="Nomor Plat" required>
+    <button type="button" class="removeNopol" style="display:none;">×</button>
+  </div>`;
+}catch(err){
+  alert("Terjadi kesalahan: "+err);
+}
+
+// Refresh riwayat
+loadRiwayat();
 });
 
-// Riwayat Realtime
+// ======= Riwayat =======
 function loadRiwayat(){
-    db.collection('pengajuan').orderBy('timestamp','desc')
-    .onSnapshot(snapshot=>{
-        const tbody = document.getElementById('riwayatData');
-        tbody.innerHTML='';
-        snapshot.forEach(doc=>{
-            const d = doc.data();
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${d.jenis_pengajuan}</td>
-                <td>${d.nama}</td>
-                <td>${d.departement}</td>
-                <td>${d.nomor_plat}</td>
-                <td>${d.jenis_kendaraan||''}</td>
-                <td>${d.periode_awal} s/d ${d.periode_akhir}</td>
-                <td>${d.keterangan||''}</td>
-                <td>${d.status_admin==='sudah' ? '<span class="status-sudah">Sudah di Input</span>' : '<span class="status-baru">Belum di Input</span>'}</td>
-            `;
-            tbody.appendChild(tr);
-        });
+db.collection('pengajuan').orderBy('timestamp','desc')
+.onSnapshot(snapshot=>{
+    const tbody = document.getElementById('riwayatData');
+    tbody.innerHTML='';
+    snapshot.forEach(doc=>{
+        const d = doc.data();
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+        <td>${d.jenis_pengajuan}</td>
+        <td>${d.nama}</td>
+        <td>${d.departement}</td>
+        <td>${d.nomor_plat}</td>
+        <td>${d.jenis_kendaraan||''}</td>
+        <td>${d.periode_awal} s/d ${d.periode_akhir}</td>
+        <td>${d.keterangan||''}</td>
+        <td>${d.status_admin==='sudah' ? '<span class="status-sudah">Sudah di Input</span>' : '<span class="status-baru">Belum di Input</span>'}</td>
+        `;
+        tbody.appendChild(tr);
     });
+}
+);
 }
 loadRiwayat();
 
-// Ganti Password
+// ======= Ganti Password =======
 document.getElementById('formGanti').addEventListener('submit', e=>{
-    e.preventDefault();
-    alert("Fungsi ganti password akan menggunakan Firebase Auth nanti.");
+e.preventDefault();
+alert("Fungsi ganti password akan menggunakan Firebase Auth nanti.");
 });
 
-// Logout
+// ======= Logout =======
 document.getElementById('btnLogout').addEventListener('click', ()=>{
-    localStorage.removeItem('management');
-    window.location.href="login_management.html";
+localStorage.removeItem('management');
+window.location.href="login_management.html";
 });
 </script>
 

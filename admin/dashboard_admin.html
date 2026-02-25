@@ -5,67 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin - Free Parkir</title>
 <style>
-body{
-    font-family: Arial;
-    background:#f4f6f9;
-    margin:0;
-    padding:0;
-}
-h2{
-    text-align:center;
-    margin:15px 0;
-}
-.container{
-    width:95%;
-    margin:auto;
-}
+* { margin:0; padding:0; box-sizing:border-box; font-family:Arial,sans-serif; }
+body { background:#f4f6f9; min-height:100vh; }
+h2 { text-align:center; margin:15px 0; }
+.container { width:95%; max-width:1000px; margin:auto; }
 
-.filter-group{
-    display:flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin-bottom:10px;
-}
-.filter-group input, .filter-group button{
-    flex: 1 1 45%;
-    padding:8px;
-    font-size:14px;
-}
+table { width:100%; border-collapse:collapse; background:white; font-size:13px; }
+th { background:#2c3e50; color:white; padding:10px; }
+td { padding:8px; text-align:center; vertical-align:middle; }
+tr:nth-child(even){ background:#f2f2f2; }
 
-.card{
-    background:white;
-    border-radius:8px;
-    box-shadow:0 2px 5px rgba(0,0,0,0.1);
-    margin-bottom:10px;
-    padding:10px;
+.btn { padding:5px 10px; border-radius:5px; color:white; border:none; cursor:pointer; }
+.btn-hapus { background:red; }
+.status-aktif { color:green; font-weight:bold; }
+.status-selesai { color:gray; font-weight:bold; }
+
+textarea { width:180px; height:60px; resize:vertical; }
+
+input, select, button { font-size:13px; padding:5px; margin:3px 0; border-radius:5px; }
+button { cursor:pointer; }
+@media(max-width:600px){
+    table, th, td { font-size:11px; }
+    textarea { width:140px; height:50px; }
 }
-.card-row{
-    display:flex;
-    justify-content:space-between;
-    flex-wrap:wrap;
-    margin-bottom:5px;
-}
-.card-row span{
-    font-weight:bold;
-}
-textarea{
-    width:100%;
-    height:50px;
-    resize:vertical;
-    margin-bottom:5px;
-}
-.btn{
-    padding:5px 10px;
-    border:none;
-    border-radius:5px;
-    color:white;
-    cursor:pointer;
-    margin-right:5px;
-}
-.btn-hapus{background:red;}
-.btn-input{background:green;}
-.status-aktif{color:green;font-weight:bold;}
-.status-selesai{color:gray;font-weight:bold;}
 </style>
 </head>
 <body>
@@ -73,126 +35,142 @@ textarea{
 <h2>KELOLA ADMIN</h2>
 
 <div class="container">
-<div class="filter-group">
-    <input type="text" id="cari" placeholder="Cari Nama / Plat">
-    <input type="month" id="bulan">
-    <button onclick="loadData()">Filter</button>
+<label>Cari Nama / Plat:</label>
+<input type="text" id="cari" placeholder="Cari...">
+<label>Periode Bulan:</label>
+<input type="month" id="bulan">
+<button onclick="loadData()">Filter</button>
+
+<table>
+<thead>
+<tr>
+<th>Jenis</th>
+<th>Nama</th>
+<th>Departement</th>
+<th>Plat</th>
+<th>Kendaraan</th>
+<th>Periode</th>
+<th>Keterangan</th>
+<th>Status</th>
+<th>Catatan Admin</th>
+<th>Aksi</th>
+</tr>
+</thead>
+<tbody id="data-table"></tbody>
+</table>
 </div>
 
-<div id="data-cards"></div>
-</div>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+    apiKey: "API_KEY",
+    authDomain: "PROJECT_ID.firebaseapp.com",
+    projectId: "PROJECT_ID",
+    storageBucket: "PROJECT_ID.appspot.com",
+    messagingSenderId: "SENDER_ID",
+    appId: "APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+</script>
 
-<script type="module">
-import { getFirestore, collection, onSnapshot, doc, updateDoc, query, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { app } from "./firebase-config.js";
+<script>
+// ======= Render Data ke Tabel =======
+const tableBody = document.getElementById('data-table');
 
-const db = getFirestore(app);
-const colRef = collection(db, "pengajuan");
-const dataCards = document.getElementById("data-cards");
+function renderRow(docData, docId){
+    const tr = document.createElement('tr');
 
-// Render card
-function renderCard(docData, docId){
+    // Status aktif/selesai
     const today = new Date();
     const awal = new Date(docData.periode_awal);
     const akhir = new Date(docData.periode_akhir);
-
     let statusText = "-";
-    let statusClass = "";
-    if(today >= awal && today <= akhir){
-        statusText = "Aktif";
-        statusClass = "status-aktif";
-    }else if(today > akhir){
-        statusText = "Selesai";
-        statusClass = "status-selesai";
-    }
+    if(today >= awal && today <= akhir) statusText = "<span class='status-aktif'>Aktif</span>";
+    else if(today > akhir) statusText = "<span class='status-selesai'>Selesai</span>";
 
-    const card = document.createElement("div");
-    card.className = "card";
-
-    card.innerHTML = `
-        <div class="card-row"><span>Jenis:</span> ${docData.jenis_pengajuan}</div>
-        <div class="card-row"><span>Nama:</span> ${docData.nama_karyawan}</div>
-        <div class="card-row"><span>Departement:</span> ${docData.departement}</div>
-        <div class="card-row"><span>Plat:</span> ${docData.nomor_plat}</div>
-        <div class="card-row"><span>Kendaraan:</span> ${docData.jenis_kendaraan}</div>
-        <div class="card-row"><span>Periode:</span> ${docData.periode_awal} s/d ${docData.periode_akhir}</div>
-        <div class="card-row"><span>Keterangan:</span> ${docData.keterangan}</div>
-        <div class="card-row ${statusClass}"><span>Status:</span> ${statusText}</div>
-        <textarea class="catatan-admin" data-id="${docId}">${docData.catatan_admin || ""}</textarea>
-        <div>
-            <button class="btn btn-input" onclick="markDone('${docId}')">Sudah di Input</button>
-            <button class="btn btn-hapus" onclick="hapusData('${docId}')">Hapus</button>
-        </div>
+    tr.innerHTML = `
+        <td>${docData.jenis_pengajuan}</td>
+        <td>${docData.nama}</td>
+        <td>${docData.departement}</td>
+        <td>${docData.nomor_plat}</td>
+        <td>${docData.jenis_kendaraan||''}</td>
+        <td>${docData.periode_awal} s/d ${docData.periode_akhir}</td>
+        <td>${docData.keterangan||''}</td>
+        <td>${statusText}</td>
+        <td>
+            <textarea class="catatan-admin" data-id="${docId}">${docData.catatan_admin||''}</textarea>
+        </td>
+        <td>
+            <button class="btn btn-hapus" data-id="${docId}">Hapus</button>
+        </td>
     `;
-    dataCards.appendChild(card);
+    tableBody.appendChild(tr);
 }
 
-// Auto-save catatan admin
-function autoSave(){
-    document.querySelectorAll('.catatan-admin').forEach(textarea=>{
-        let timeout=null;
-        textarea.addEventListener('keyup', ()=>{
-            clearTimeout(timeout);
-            timeout = setTimeout(async ()=>{
-                const id = textarea.getAttribute('data-id');
-                const catatan = textarea.value;
-                const docRef = doc(db, "pengajuan", id);
-                await updateDoc(docRef, { catatan_admin: catatan });
-            },800);
-        });
-    });
-}
-
-// Tombol "Sudah di Input"
-window.markDone = async function(id){
-    const docRef = doc(db, "pengajuan", id);
-    await updateDoc(docRef, { status_admin: "sudah di input" });
-    alert("Status sudah di input admin");
-}
-
-// Hapus data
-window.hapusData = async function(id){
-    if(confirm("Yakin ingin menghapus data ini?")){
-        await deleteDoc(doc(db, "pengajuan", id));
-        loadData();
-    }
-}
-
-// Filter
-function filterData(allDocs){
-    const cari = document.getElementById('cari')?.value.toLowerCase() || "";
-    const bulan = document.getElementById('bulan')?.value || "";
-
-    return allDocs.filter(docData=>{
-        let matchCari=true, matchBulan=true;
-        if(cari){
-            matchCari = Object.values(docData).some(val=>String(val).toLowerCase().includes(cari));
-        }
-        if(bulan){
-            const docMonth = docData.periode_awal.split('-').slice(0,2).join('-'); // YYYY-MM
-            matchBulan = docMonth === bulan;
-        }
-        return matchCari && matchBulan;
-    });
-}
-
-// Load data realtime
+// ======= Load Data Realtime =======
+let unsubscribe = null;
 function loadData(){
-    onSnapshot(query(colRef, orderBy("periode_awal", "desc")), snapshot=>{
-        dataCards.innerHTML="";
-        const docs = snapshot.docs.map(d=>({ id:d.id, ...d.data() }));
-        const filtered = filterData(docs);
-        filtered.forEach(d=>renderCard(d, d.id));
-        autoSave();
+    const cari = document.getElementById('cari').value.toLowerCase();
+    const bulan = document.getElementById('bulan').value;
+
+    // Hentikan listener sebelumnya
+    if(unsubscribe) unsubscribe();
+
+    let q = db.collection('pengajuan').orderBy('timestamp','desc');
+
+    unsubscribe = q.onSnapshot(snapshot=>{
+        tableBody.innerHTML='';
+        snapshot.forEach(doc=>{
+            const d = doc.data();
+            // Filter manual karena Firebase tidak mendukung LIKE di client
+            let match = true;
+            if(cari){
+                match = Object.values(d).some(v=>String(v).toLowerCase().includes(cari));
+            }
+            if(bulan){
+                const bln = d.periode_awal.substring(0,7);
+                if(bln !== bulan) match = false;
+            }
+            if(match) renderRow(d, doc.id);
+        });
+        aktifkanAutoSave();
+        aktifkanHapus();
     });
 }
 
-// Event filter
-document.getElementById("cari")?.addEventListener('input', loadData);
-document.getElementById("bulan")?.addEventListener('input', loadData);
+// ======= Auto Save Catatan Admin =======
+function aktifkanAutoSave(){
+    document.querySelectorAll('.catatan-admin').forEach(textarea=>{
+        let timeout = null;
+        textarea.onkeyup = ()=>{
+            clearTimeout(timeout);
+            timeout = setTimeout(()=>{
+                const id = textarea.dataset.id;
+                const catatan = textarea.value;
+                db.collection('pengajuan').doc(id).update({ catatan_admin: catatan, status_admin: 'sudah di input' });
+            }, 800);
+        };
+    });
+}
 
-// Init load
+// ======= Hapus Data =======
+function aktifkanHapus(){
+    document.querySelectorAll('.btn-hapus').forEach(btn=>{
+        btn.onclick = ()=>{
+            if(confirm("Yakin ingin menghapus data ini?")){
+                const id = btn.dataset.id;
+                db.collection('pengajuan').doc(id).delete();
+            }
+        };
+    });
+}
+
+// ======= Auto Refresh =======
 loadData();
+setInterval(loadData, 10000);
 </script>
 
 </body>

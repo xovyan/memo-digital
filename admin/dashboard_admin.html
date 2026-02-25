@@ -4,28 +4,78 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dashboard Admin</title>
 <link rel="stylesheet" href="../assets/style.css">
-<script type="module" src="../assets/admin.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="../assets/firebase-config.js"></script>
 </head>
 <body>
+
 <h2>Dashboard Admin</h2>
-<div class="container">
+<p><a href="login_admin.html" onclick="logout()">Logout</a></p>
 
-Cari: <input type="text" id="cari">
-Periode Bulan: <input type="month" id="bulan">
-<button onclick="loadData()">Filter</button>
-
-<table>
-<thead>
+<table border="1" id="pengajuanTable">
 <tr>
-<th>Jenis</th><th>Nama</th><th>Departement</th>
-<th>Plat</th><th>Kendaraan</th><th>Periode</th>
-<th>Keterangan</th><th>Status</th>
-<th>Catatan Admin</th><th>Aksi</th>
+<th>Jenis</th>
+<th>Nama</th>
+<th>Departement</th>
+<th>Plat</th>
+<th>Kendaraan</th>
+<th>Periode</th>
+<th>Keterangan</th>
+<th>Status</th>
+<th>Aksi</th>
 </tr>
-</thead>
-<tbody id="data-table"></tbody>
 </table>
 
-</div>
+<script>
+const dbRef = db.collection("pengajuan");
+
+// Tampilkan pengajuan realtime
+dbRef.orderBy("periode_awal", "desc").onSnapshot(snapshot => {
+    const table = document.getElementById("pengajuanTable");
+    table.innerHTML = `
+    <tr>
+    <th>Jenis</th>
+    <th>Nama</th>
+    <th>Departement</th>
+    <th>Plat</th>
+    <th>Kendaraan</th>
+    <th>Periode</th>
+    <th>Keterangan</th>
+    <th>Status</th>
+    <th>Aksi</th>
+    </tr>`;
+    
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        const tr = document.createElement("tr");
+        const status = data.sudah_diinput ? "Sudah diinput" : "Belum diinput";
+        tr.innerHTML = `
+        <td>${data.jenis_pengajuan}</td>
+        <td>${data.nama}</td>
+        <td>${data.departement}</td>
+        <td>${data.nomor_plat}</td>
+        <td>${data.jenis_kendaraan}</td>
+        <td>${data.periode_awal} s/d ${data.periode_akhir}</td>
+        <td>${data.keterangan}</td>
+        <td>${status}</td>
+        <td>
+            ${!data.sudah_diinput ? '<button onclick="setDone(\''+doc.id+'\')">Sudah diinput</button>' : ''}
+        </td>`;
+        table.appendChild(tr);
+    });
+});
+
+// Tombol sudah diinput
+function setDone(id){
+    dbRef.doc(id).update({sudah_diinput: true});
+}
+
+// Logout
+function logout(){
+    localStorage.removeItem('admin');
+}
+</script>
+
 </body>
 </html>

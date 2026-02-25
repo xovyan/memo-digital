@@ -13,55 +13,59 @@ body{
 }
 h2{
     text-align:center;
-    margin-top:15px;
+    margin:15px 0;
 }
 .container{
     width:95%;
     margin:auto;
-    overflow-x:auto;
 }
 
-table{
-    width:100%;
-    border-collapse:collapse;
-    background:white;
-    min-width:800px;
+.filter-group{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom:10px;
 }
-th{
-    background:#2c3e50;
-    color:white;
-    padding:10px;
-    text-align:center;
-}
-td{
+.filter-group input, .filter-group button{
+    flex: 1 1 45%;
     padding:8px;
-    text-align:center;
+    font-size:14px;
 }
-tr:nth-child(even){background:#f2f2f2;}
 
+.card{
+    background:white;
+    border-radius:8px;
+    box-shadow:0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom:10px;
+    padding:10px;
+}
+.card-row{
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    margin-bottom:5px;
+}
+.card-row span{
+    font-weight:bold;
+}
+textarea{
+    width:100%;
+    height:50px;
+    resize:vertical;
+    margin-bottom:5px;
+}
 .btn{
     padding:5px 10px;
+    border:none;
     border-radius:5px;
     color:white;
-    border:none;
     cursor:pointer;
+    margin-right:5px;
 }
 .btn-hapus{background:red;}
 .btn-input{background:green;}
 .status-aktif{color:green;font-weight:bold;}
 .status-selesai{color:gray;font-weight:bold;}
-textarea{
-    width:180px;
-    height:60px;
-    resize:vertical;
-}
-.filter-group{
-    margin-bottom:15px;
-}
-.filter-group input, .filter-group button{
-    padding:6px 10px;
-    margin-right:5px;
-}
 </style>
 </head>
 <body>
@@ -75,23 +79,7 @@ textarea{
     <button onclick="loadData()">Filter</button>
 </div>
 
-<table>
-<thead>
-<tr>
-<th>Jenis</th>
-<th>Nama</th>
-<th>Departement</th>
-<th>Plat</th>
-<th>Kendaraan</th>
-<th>Periode</th>
-<th>Keterangan</th>
-<th>Status</th>
-<th>Catatan Admin</th>
-<th>Aksi</th>
-</tr>
-</thead>
-<tbody id="data-table"></tbody>
-</table>
+<div id="data-cards"></div>
 </div>
 
 <script type="module">
@@ -100,12 +88,10 @@ import { app } from "./firebase-config.js";
 
 const db = getFirestore(app);
 const colRef = collection(db, "pengajuan");
-const tableBody = document.getElementById("data-table");
+const dataCards = document.getElementById("data-cards");
 
-// Render satu row
-function renderRow(docData, docId){
-    const tr = document.createElement("tr");
-
+// Render card
+function renderCard(docData, docId){
     const today = new Date();
     const awal = new Date(docData.periode_awal);
     const akhir = new Date(docData.periode_akhir);
@@ -120,22 +106,25 @@ function renderRow(docData, docId){
         statusClass = "status-selesai";
     }
 
-    tr.innerHTML = `
-        <td>${docData.jenis_pengajuan}</td>
-        <td>${docData.nama_karyawan}</td>
-        <td>${docData.departement}</td>
-        <td>${docData.nomor_plat}</td>
-        <td>${docData.jenis_kendaraan}</td>
-        <td>${docData.periode_awal} s/d ${docData.periode_akhir}</td>
-        <td>${docData.keterangan}</td>
-        <td class="${statusClass}">${statusText}</td>
-        <td><textarea class="catatan-admin" data-id="${docId}">${docData.catatan_admin || ""}</textarea></td>
-        <td>
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+        <div class="card-row"><span>Jenis:</span> ${docData.jenis_pengajuan}</div>
+        <div class="card-row"><span>Nama:</span> ${docData.nama_karyawan}</div>
+        <div class="card-row"><span>Departement:</span> ${docData.departement}</div>
+        <div class="card-row"><span>Plat:</span> ${docData.nomor_plat}</div>
+        <div class="card-row"><span>Kendaraan:</span> ${docData.jenis_kendaraan}</div>
+        <div class="card-row"><span>Periode:</span> ${docData.periode_awal} s/d ${docData.periode_akhir}</div>
+        <div class="card-row"><span>Keterangan:</span> ${docData.keterangan}</div>
+        <div class="card-row ${statusClass}"><span>Status:</span> ${statusText}</div>
+        <textarea class="catatan-admin" data-id="${docId}">${docData.catatan_admin || ""}</textarea>
+        <div>
             <button class="btn btn-input" onclick="markDone('${docId}')">Sudah di Input</button>
             <button class="btn btn-hapus" onclick="hapusData('${docId}')">Hapus</button>
-        </td>
+        </div>
     `;
-    tableBody.appendChild(tr);
+    dataCards.appendChild(card);
 }
 
 // Auto-save catatan admin
@@ -190,10 +179,10 @@ function filterData(allDocs){
 // Load data realtime
 function loadData(){
     onSnapshot(query(colRef, orderBy("periode_awal", "desc")), snapshot=>{
-        tableBody.innerHTML="";
+        dataCards.innerHTML="";
         const docs = snapshot.docs.map(d=>({ id:d.id, ...d.data() }));
         const filtered = filterData(docs);
-        filtered.forEach(d=>renderRow(d, d.id));
+        filtered.forEach(d=>renderCard(d, d.id));
         autoSave();
     });
 }

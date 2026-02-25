@@ -20,10 +20,11 @@ th { background:#4e54c8; color:white; }
 tr:nth-child(even){ background:#f2f2f2; }
 .status-baru { color:red; font-weight:bold; }
 .status-sudah { color:green; font-weight:bold; }
+#nopolContainer { margin-bottom:10px; }
 .nopol-group { display:flex; gap:5px; margin-bottom:5px; }
-.nopol-group input { flex:1; }
-.removeNopol { background:red; color:white; border:none; border-radius:4px; cursor:pointer; padding:0 8px; }
-#addNopol { margin-bottom:10px; }
+.nopol-group input { flex:1; padding:10px; border-radius:8px; border:1px solid #ccc; font-size:14px; }
+.removeNopol { width:35px; background:red; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold; font-size:16px; }
+#addNopol { padding:8px 12px; margin-bottom:10px; border-radius:8px; background:#4e54c8; color:white; border:none; cursor:pointer; font-weight:bold; }
 @media(max-width:600px){
     table, th, td { font-size:12px; }
     nav button { font-size:12px; padding:10px; }
@@ -47,14 +48,12 @@ tr:nth-child(even){ background:#f2f2f2; }
 <div class="tab" id="pengajuan">
 <h3>Form Pengajuan</h3>
 <form id="formPengajuan">
-
     <select name="jenis_pengajuan" required>
         <option value="">--Pilih Jenis--</option>
         <option value="free parkir">Free Parkir</option>
         <option value="compliment">Compliment</option>
         <option value="ubah plat">Ubah Plat</option>
     </select>
-
     <input type="text" name="nama" placeholder="Nama" required>
     <input type="text" name="departement" placeholder="Departement" required>
 
@@ -89,7 +88,6 @@ tr:nth-child(even){ background:#f2f2f2; }
 <th>Periode</th>
 <th>Keterangan</th>
 <th>Status</th>
-<th>Aksi</th>
 </tr>
 </thead>
 <tbody id="riwayatData"></tbody>
@@ -143,8 +141,8 @@ tabs.forEach(btn=>{
 });
 
 // ======= NOMOR PLAT DINAMIS =======
-const addNopol = document.getElementById('addNopol');
 const nopolContainer = document.getElementById('nopolContainer');
+const addNopol = document.getElementById('addNopol');
 
 function createNopolField(value=''){
     const div = document.createElement('div');
@@ -153,9 +151,8 @@ function createNopolField(value=''){
         <input type="text" name="nomor_plat[]" placeholder="Nomor Plat" required value="${value}">
         <button type="button" class="removeNopol">×</button>
     `;
-    div.querySelector('.removeNopol').addEventListener('click', ()=>{
-        div.remove();
-    });
+    const btn = div.querySelector('.removeNopol');
+    btn.addEventListener('click', ()=>div.remove());
     return div;
 }
 
@@ -167,24 +164,21 @@ addNopol.addEventListener('click', ()=>{
 // ======= FORM PENGAJUAN =======
 document.getElementById('formPengajuan').addEventListener('submit', async e=>{
     e.preventDefault();
-    const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData.entries());
-    
-    // Convert multiple plat menjadi array
-    data.nomor_plat = formData.getAll('nomor_plat[]');
-    
-    data.status_admin = "belum";
+    const data = Object.fromEntries(new FormData(e.target).entries());
+
+    // Gabungkan semua plat menjadi array
+    data.nomor_plat = Array.isArray(data.nomor_plat) ? data.nomor_plat : [data.nomor_plat];
+
+    data.status_admin = "belum"; // Default status admin
     data.timestamp = firebase.firestore.FieldValue.serverTimestamp();
 
     try{
-        await db.collection('pengajuan').add(data);
+        await db.collection('pengajuan').add(data); // Masuk langsung ke admin
         alert("Pengajuan berhasil dikirim ke admin!");
         e.target.reset();
-        // reset input plat pertama saja
-        nopolContainer.innerHTML = `<div class="nopol-group">
-            <input type="text" name="nomor_plat[]" placeholder="Nomor Plat" required>
-            <button type="button" class="removeNopol" style="display:none;">×</button>
-        </div>`;
+        // Reset nopol ke 1 field saja
+        nopolContainer.innerHTML = '';
+        nopolContainer.appendChild(createNopolField());
     }catch(err){
         alert("Terjadi kesalahan: "+err);
     }
@@ -208,17 +202,7 @@ function loadRiwayat(){
                 <td>${d.periode_awal} s/d ${d.periode_akhir}</td>
                 <td>${d.keterangan||''}</td>
                 <td>${d.status_admin==='sudah' ? '<span class="status-sudah">Sudah di Input</span>' : '<span class="status-baru">Belum di Input</span>'}</td>
-                <td>${d.status_admin==='sudah' ? '' : '<button class="hapusBtn">Hapus</button>'}</td>
             `;
-            // Hanya admin bisa hapus
-            const hapusBtn = tr.querySelector('.hapusBtn');
-            if(hapusBtn){
-                hapusBtn.addEventListener('click', async ()=>{
-                    if(confirm("Yakin ingin menghapus data ini?")){
-                        await db.collection('pengajuan').doc(doc.id).delete();
-                    }
-                });
-            }
             tbody.appendChild(tr);
         });
     });
@@ -233,7 +217,7 @@ document.getElementById('formGanti').addEventListener('submit', e=>{
 
 // ======= LOGOUT =======
 document.getElementById('btnLogout').addEventListener('click', ()=>{
-    alert("Logout berhasil!");
+    alert("Logout berhasil!"); 
     window.location.href="login_management.html";
 });
 </script>

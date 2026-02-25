@@ -20,11 +20,8 @@ th { background:#4e54c8; color:white; }
 tr:nth-child(even){ background:#f2f2f2; }
 .status-baru { color:red; font-weight:bold; }
 .status-sudah { color:green; font-weight:bold; }
-#nopolContainer { margin-bottom:10px; }
-.nopol-group { display:flex; gap:5px; margin-bottom:5px; }
-.nopol-group input { flex:1; padding:10px; border-radius:8px; border:1px solid #ccc; font-size:14px; }
-.removeNopol { width:35px; background:red; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold; font-size:16px; }
-#addNopol { padding:8px 12px; margin-bottom:10px; border-radius:8px; background:#4e54c8; color:white; border:none; cursor:pointer; font-weight:bold; }
+.nopol-container input { margin-bottom:5px; width:calc(100% - 40px); display:inline-block; }
+.nopol-container button { width:35px; background:red; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold; }
 @media(max-width:600px){
     table, th, td { font-size:12px; }
     nav button { font-size:12px; padding:10px; }
@@ -58,13 +55,8 @@ tr:nth-child(even){ background:#f2f2f2; }
     <input type="text" name="departement" placeholder="Departement" required>
 
     <!-- Nomor Plat Dinamis -->
-    <div id="nopolContainer">
-        <div class="nopol-group">
-            <input type="text" name="nomor_plat[]" placeholder="Nomor Plat" required>
-            <button type="button" class="removeNopol" style="display:none;">×</button>
-        </div>
-    </div>
-    <button type="button" id="addNopol">+ Tambah Plat</button>
+    <div class="nopol-container" id="nopolContainer"></div>
+    <button type="button" id="tambahNopol" style="background:#27ae60;">+ Tambah Plat</button>
 
     <input type="text" name="jenis_kendaraan" placeholder="Jenis Kendaraan">
     <input type="date" name="periode_awal" required>
@@ -140,47 +132,67 @@ tabs.forEach(btn=>{
     });
 });
 
-// ======= NOMOR PLAT DINAMIS =======
+// ======= Nomor Plat Dinamis =======
 const nopolContainer = document.getElementById('nopolContainer');
-const addNopol = document.getElementById('addNopol');
-
-function createNopolField(value=''){
+function createNopolField(){
     const div = document.createElement('div');
-    div.classList.add('nopol-group');
-    div.innerHTML = `
-        <input type="text" name="nomor_plat[]" placeholder="Nomor Plat" required value="${value}">
-        <button type="button" class="removeNopol">×</button>
-    `;
-    const btn = div.querySelector('.removeNopol');
-    btn.addEventListener('click', ()=>div.remove());
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.name = 'nomor_plat[]';
+    input.placeholder = 'Nomor Plat';
+    input.required = true;
+    input.style.marginBottom = '5px';
+    div.appendChild(input);
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = '×';
+    btn.addEventListener('click', ()=> div.remove());
+    div.appendChild(btn);
     return div;
 }
-
-addNopol.addEventListener('click', ()=>{
-    const newField = createNopolField();
-    nopolContainer.appendChild(newField);
+nopolContainer.appendChild(createNopolField());
+document.getElementById('tambahNopol').addEventListener('click', ()=>{
+    nopolContainer.appendChild(createNopolField());
 });
 
 // ======= FORM PENGAJUAN =======
 document.getElementById('formPengajuan').addEventListener('submit', async e=>{
     e.preventDefault();
-    const data = Object.fromEntries(new FormData(e.target).entries());
+    const formData = new FormData(e.target);
+    const data = {};
 
-    // Gabungkan semua plat menjadi array
-    data.nomor_plat = Array.isArray(data.nomor_plat) ? data.nomor_plat : [data.nomor_plat];
-
-    data.status_admin = "belum"; // Default status admin
+    // Semua field wajib, default ''
+    data.jenis_pengajuan = formData.get('jenis_pengajuan') || '';
+    data.nama = formData.get('nama') || '';
+    data.departement = formData.get('departement') || '';
+    data.jenis_kendaraan = formData.get('jenis_kendaraan') || '';
+    data.periode_awal = formData.get('periode_awal') || '';
+    data.periode_akhir = formData.get('periode_akhir') || '';
+    data.keterangan = formData.get('keterangan') || '';
+    data.status_admin = 'belum';
     data.timestamp = firebase.firestore.FieldValue.serverTimestamp();
 
+    // Nomor plat array
+    const nopolInputs = document.querySelectorAll('input[name="nomor_plat[]"]');
+    data.nomor_plat = [];
+    nopolInputs.forEach(inp=>{
+        if(inp.value.trim()!=='') data.nomor_plat.push(inp.value.trim());
+    });
+    if(data.nomor_plat.length===0){
+        alert("Minimal 1 nomor plat harus diisi!");
+        return;
+    }
+
     try{
-        await db.collection('pengajuan').add(data); // Masuk langsung ke admin
+        await db.collection('pengajuan').add(data);
         alert("Pengajuan berhasil dikirim ke admin!");
         e.target.reset();
-        // Reset nopol ke 1 field saja
-        nopolContainer.innerHTML = '';
+        nopolContainer.innerHTML='';
         nopolContainer.appendChild(createNopolField());
     }catch(err){
-        alert("Terjadi kesalahan: "+err);
+        console.error(err);
+        alert("Terjadi kesalahan: "+err.message);
     }
 });
 
@@ -197,11 +209,11 @@ function loadRiwayat(){
                 <td>${d.jenis_pengajuan}</td>
                 <td>${d.nama}</td>
                 <td>${d.departement}</td>
-                <td>${Array.isArray(d.nomor_plat) ? d.nomor_plat.join(', ') : d.nomor_plat}</td>
+                <td>${d.nomor_plat.join(', ')}</td>
                 <td>${d.jenis_kendaraan||''}</td>
                 <td>${d.periode_awal} s/d ${d.periode_akhir}</td>
                 <td>${d.keterangan||''}</td>
-                <td>${d.status_admin==='sudah' ? '<span class="status-sudah">Sudah di Input</span>' : '<span class="status-baru">Belum di Input</span>'}</td>
+                <td>${d.status_admin==='sudah di input' ? '<span class="status-sudah">Sudah di Input</span>' : '<span class="status-baru">Belum di Input</span>'}</td>
             `;
             tbody.appendChild(tr);
         });

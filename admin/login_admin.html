@@ -1,18 +1,110 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <title>Login Admin</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Login Admin</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="../assets/firebase-config.js"></script>
+
+<style>
+/* Reset & basic */
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(to right, #8e44ad, #3498db);
+    height: 100%;
+}
+
+/* Container login */
+.login-container {
+    width: 90%;
+    max-width: 400px;
+    margin: 80px auto;
+    background: #fff;
+    padding: 30px 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    text-align: center;
+}
+
+/* Header */
+.login-container h2 {
+    margin-bottom: 25px;
+    color: #2c3e50;
+}
+
+/* Input fields */
+.login-container input {
+    width: 90%;
+    padding: 12px 15px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+/* Button */
+.login-container button {
+    width: 95%;
+    padding: 12px;
+    margin-top: 15px;
+    background: #8e44ad;
+    color: #fff;
+    font-size: 18px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.login-container button:hover {
+    background: #5b2c6f;
+}
+
+/* Error message */
+#msg {
+    color: red;
+    margin-top: 10px;
+    font-size: 14px;
+}
+</style>
 </head>
 <body>
 
-    <h2>Login Admin</h2>
+<div class="login-container">
+  <h2>Login Admin</h2>
+  <form id="loginForm">
+    <input type="text" id="username" placeholder="Username" required>
+    <input type="password" id="password" placeholder="Password" required>
+    <button type="submit">Login</button>
+  </form>
+  <p id="msg"></p>
+</div>
 
-    <input type="text" id="username" placeholder="Username"><br><br>
-    <input type="password" id="password" placeholder="Password"><br><br>
+<script>
+// Hardcoded admin account (awal)
+const adminUsers = [
+  {username: "admin", password: "1234"}
+];
 
-    <button id="loginAdmin">Login</button>
+document.getElementById('loginForm').addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const u = document.getElementById('username').value.trim();
+    const p = document.getElementById('password').value.trim();
 
-    <script type="module" src="../assets/login_admin.js"></script>
+    const found = adminUsers.find(a => a.username===u && a.password===p);
+    if(found){
+        localStorage.setItem('admin', u);
+        // arahkan ke dashboard admin
+        window.location.href = "dashboard_admin.html";
+    }else{
+        document.getElementById('msg').innerText = "Username atau password salah";
+    }
+});
+</script>
 
 </body>
 </html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin - Free Parkir</title>
+<style>
+body{font-family:Arial;background:#f4f6f9}
+h2{text-align:center}
+.container{width:95%;margin:auto}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+}
+th{
+    background:#2c3e50;
+    color:white;
+    padding:10px;
+}
+td{padding:8px;text-align:center}
+tr:nth-child(even){background:#f2f2f2}
+
+.btn{
+    padding:5px 10px;
+    border-radius:5px;
+    color:white;
+    border:none;
+    cursor:pointer;
+}
+.btn-hapus{background:red}
+
+.status-aktif{color:green;font-weight:bold;}
+.status-selesai{color:gray;font-weight:bold;}
+
+textarea{
+    width:180px;
+    height:60px;
+}
+</style>
+</head>
+<body>
+
+<h2>KELOLA ADMIN</h2>
+
+<div class="container">
+
+Cari:
+<input type="text" id="cari">
+
+Periode Bulan:
+<input type="month" id="bulan">
+
+<button onclick="loadData()">Filter</button>
+
+<table>
+<thead>
+<tr>
+<th>Jenis</th>
+<th>Nama</th>
+<th>Departement</th>
+<th>Plat</th>
+<th>Kendaraan</th>
+<th>Periode</th>
+<th>Keterangan</th>
+<th>Status</th>
+<th>Catatan Admin</th>
+<th>Aksi</th>
+</tr>
+</thead>
+
+<tbody id="data-table"></tbody>
+</table>
+
+</div>
+
+<script type="module" src="../assets/admin.js"></script>
+
+</body>
+</html>

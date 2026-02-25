@@ -1,79 +1,185 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Admin - Free Parkir</title>
-<style>
-body{font-family:Arial;background:#f4f6f9}
-h2{text-align:center}
-.container{width:95%;margin:auto}
+import { db } from "./firebase-config.js";
+import {
+  collection,
+  onSnapshot,
+  updateDoc,
+  deleteDoc,
+  doc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-table{
-    width:100%;
-    border-collapse:collapse;
-    background:white;
+const tableBody = document.getElementById("data-table");
+
+
+// =============================
+// REALTIME LOAD DATA
+// =============================
+onSnapshot(collection(db, "pengajuan"), (snapshot) => {
+
+  loadData(snapshot);
+
+});
+
+
+function loadData(snapshot){
+
+  let cari = document.querySelector('input[name="cari"]')?.value.toLowerCase() || "";
+  let bulan = document.querySelector('input[name="bulan"]')?.value || "";
+
+  tableBody.innerHTML = "";
+
+  snapshot.forEach((docSnap) => {
+
+    const data = docSnap.data();
+    const id = docSnap.id;
+
+    // =========================
+    // FILTER CARI
+    // =========================
+    if(cari){
+      let gabung = (
+        (data.nama_karyawan || "") +
+        (data.nomor_plat || "") +
+        (data.departement || "") +
+        (data.jenis_pengajuan || "") +
+        (data.jenis_kendaraan || "") +
+        (data.keterangan || "") +
+        (data.catatan_admin || "")
+      ).toLowerCase();
+
+      if(!gabung.includes(cari)) return;
+    }
+
+    // =========================
+    // FILTER BULAN
+    // =========================
+    if(bulan){
+      if(!data.periode_awal.startsWith(bulan)) return;
+    }
+
+    // =========================
+    // STATUS PERIODE (SAMA LOGIKA PHP)
+    // =========================
+    let today = new Date();
+    let awal = new Date(data.periode_awal);
+    let akhir = new Date(data.periode_akhir);
+
+    let statusPeriode = "-";
+
+    if(today >= awal && today <= akhir){
+      statusPeriode = "<span class='status-aktif'>Aktif</span>";
+    }
+    else if(today > akhir){
+      statusPeriode = "<span class='status-selesai'>Selesai</span>";
+    }
+
+    // =========================
+    // STATUS ADMIN
+    // =========================
+    let tombolAdmin = "";
+
+    if(data.status_admin === "sudah"){
+      tombolAdmin = "<span style='color:green;font-weight:bold;'>✔ Sudah Di Input</span>";
+    } else {
+      tombolAdmin = `
+        <button class="btn" style="background:green"
+        onclick="tandaiSelesai('${id}')">
+        Sudah Di Input
+        </button>
+      `;
+    }
+
+    // =========================
+    // FORMAT TANGGAL
+    // =========================
+    let formatAwal = formatTanggal(data.periode_awal);
+    let formatAkhir = formatTanggal(data.periode_akhir);
+
+    // =========================
+    // RENDER TABLE
+    // =========================
+    tableBody.innerHTML += `
+      <tr>
+        <td>${data.jenis_pengajuan || "-"}</td>
+        <td>${data.nama_karyawan || "-"}</td>
+        <td>${data.departement || "-"}</td>
+        <td>${data.nomor_plat || "-"}</td>
+        <td>${data.jenis_kendaraan || "-"}</td>
+        <td>${formatAwal} s/d ${formatAkhir}</td>
+        <td>${data.keterangan || "-"}</td>
+        <td>${statusPeriode}</td>
+        <td>
+          <textarea class="catatan-admin"
+          onkeyup="autoSave('${id}', this.value)">
+          ${data.catatan_admin || ""}
+          </textarea>
+        </td>
+        <td>
+          ${tombolAdmin}
+          <br><br>
+          <button class="btn btn-hapus"
+          onclick="hapusData('${id}')">
+          Hapus
+          </button>
+        </td>
+      </tr>
+    `;
+  });
 }
-th{
-    background:#2c3e50;
-    color:white;
-    padding:10px;
+
+
+// =============================
+// FORMAT TANGGAL DD-MM-YYYY
+// =============================
+function formatTanggal(tanggal){
+
+  let d = new Date(tanggal);
+  let day = String(d.getDate()).padStart(2,'0');
+  let month = String(d.getMonth()+1).padStart(2,'0');
+  let year = d.getFullYear();
+
+  return day + "-" + month + "-" + year;
 }
-td{padding:8px;text-align:center}
-tr:nth-child(even){background:#f2f2f2}
 
-.btn{
-    padding:5px 10px;
-    border-radius:5px;
-    color:white;
-    border:none;
-    cursor:pointer;
-}
-.btn-hapus{background:red}
 
-.status-aktif{color:green;font-weight:bold;}
-.status-selesai{color:gray;font-weight:bold;}
+// =============================
+// UPDATE STATUS ADMIN
+// =============================
+window.tandaiSelesai = async function(id){
 
-textarea{
-    width:180px;
-    height:60px;
-}
-</style>
-</head>
-<body>
+  await updateDoc(doc(db,"pengajuan",id),{
+    status_admin:"sudah"
+  });
 
-<h2>KELOLA ADMIN</h2>
+};
 
-<div class="container">
 
-Cari:
-<input type="text" id="cari">
+// =============================
+// HAPUS DATA
+// =============================
+window.hapusData = async function(id){
 
-Periode Bulan:
-<input type="month" id="bulan">
+  if(confirm("Yakin ingin menghapus data ini?")){
+    await deleteDoc(doc(db,"pengajuan",id));
+  }
 
-<button onclick="loadData()">Filter</button>
+};
 
-<table>
-<thead>
-<tr>
-<th>Jenis</th>
-<th>Nama</th>
-<th>Departement</th>
-<th>Plat</th>
-<th>Kendaraan</th>
-<th>Periode</th>
-<th>Keterangan</th>
-<th>Status</th>
-<th>Catatan Admin</th>
-<th>Aksi</th>
-</tr>
-</thead>
 
-<tbody id="data-table"></tbody>
-</table>
+// =============================
+// AUTO SAVE CATATAN
+// =============================
+let timeoutSave = null;
 
-</div>
+window.autoSave = function(id,value){
 
-<script type="module" src="../assets/admin.js"></script>
+  clearTimeout(timeoutSave);
 
-</body>
-</html>
+  timeoutSave = setTimeout(async function(){
+
+    await updateDoc(doc(db,"pengajuan",id),{
+      catatan_admin:value
+    });
+
+  },800);
+
+};

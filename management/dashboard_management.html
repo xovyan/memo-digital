@@ -41,9 +41,7 @@ display:flex;
 gap:5px;
 margin-bottom:5px
 }
-.nopol-group input{
-flex:1
-}
+.nopol-group input{flex:1}
 .nopol-group button{
 width:35px;
 background:red;
@@ -106,7 +104,7 @@ th{background:#4e54c8;color:#fff}
 <input type="date" name="periode_akhir" required>
 <textarea name="keterangan" placeholder="Keterangan"></textarea>
 
-<button type="submit">Kirim</button>
+<button type="submit" id="btnKirim">Kirim</button>
 
 </form>
 </div>
@@ -193,14 +191,23 @@ input.required = true;
 const btn = document.createElement("button");
 btn.type = "button";
 btn.textContent = "×";
-btn.onclick = ()=> div.remove();
+btn.onclick = ()=>{
+if(document.querySelectorAll('input[name="nomor_plat[]"]').length > 1){
+div.remove();
+}
+};
 
 div.appendChild(input);
 div.appendChild(btn);
 return div;
 }
 
+function resetNopol(){
+nopolContainer.innerHTML="";
 nopolContainer.appendChild(createNopolField());
+}
+
+resetNopol();
 
 document.getElementById("addNopol").addEventListener("click",()=>{
 nopolContainer.appendChild(createNopolField());
@@ -210,7 +217,11 @@ nopolContainer.appendChild(createNopolField());
 document.getElementById("formPengajuan").addEventListener("submit",async function(e){
 
 e.preventDefault();
+
 const form = this;
+const btn = document.getElementById("btnKirim");
+btn.disabled = true;
+
 const formData = new FormData(form);
 
 const data = {
@@ -234,22 +245,24 @@ data.nomor_plat.push(input.value.trim());
 
 if(data.nomor_plat.length===0){
 alert("Minimal 1 nomor plat harus diisi");
+btn.disabled = false;
 return;
 }
 
 try{
 await db.collection("pengajuan").add(data);
 
-/* ===== RESET TOTAL FORM (FIX FINAL) ===== */
+/* ===== RESET PAKSA TOTAL ===== */
 form.reset();
-nopolContainer.innerHTML="";
-nopolContainer.appendChild(createNopolField());
+resetNopol();
 
-alert("Data berhasil dikirim");
+alert("Data berhasil dikirim ✅");
 
 }catch(err){
 alert("Gagal mengirim: "+err.message);
 }
+
+btn.disabled = false;
 
 });
 

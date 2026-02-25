@@ -13,7 +13,8 @@ nav button { background:none; border:none; padding:15px; cursor:pointer; font-we
 nav button.active { border-bottom:3px solid #4e54c8; }
 section { padding:15px; }
 form input, form select, form textarea, form button { width:100%; margin-bottom:10px; padding:10px; border-radius:8px; border:1px solid #ccc; font-size:14px; }
-form button { background:#4e54c8; color:white; border:none; font-weight:bold; cursor:pointer; }
+form button { background:#4e54c8; color:white; border:none; font-weight:bold; cursor:pointer; transition:0.3s; }
+form button:hover { opacity:0.9; }
 table { width:100%; border-collapse:collapse; margin-top:15px; background:white; font-size:13px; }
 th, td { border:1px solid #ccc; padding:6px; text-align:center; }
 th { background:#4e54c8; color:white; }
@@ -22,6 +23,26 @@ tr:nth-child(even){ background:#f2f2f2; }
 .status-sudah { color:green; font-weight:bold; }
 .nopol-container input { margin-bottom:5px; width:calc(100% - 40px); display:inline-block; }
 .nopol-container button { width:35px; background:red; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold; }
+.toast {
+    visibility: hidden;
+    min-width: 200px;
+    background-color: #4CAF50;
+    color: white;
+    text-align: center;
+    border-radius: 8px;
+    padding: 10px;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    font-weight: bold;
+}
+.toast.show {
+    visibility: visible;
+    animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+@keyframes fadein { from {opacity:0; right:0;} to {opacity:1; right:20px;} }
+@keyframes fadeout { from {opacity:1; right:20px;} to {opacity:0; right:0;} }
 @media(max-width:600px){
     table, th, td { font-size:12px; }
     nav button { font-size:12px; padding:10px; }
@@ -56,7 +77,7 @@ tr:nth-child(even){ background:#f2f2f2; }
 
     <!-- Nomor Plat Dinamis -->
     <div class="nopol-container" id="nopolContainer"></div>
-    <button type="button" id="tambahNopol" style="background:#27ae60;">+ Tambah Plat</button>
+    <button type="button" id="tambahNopol" style="background:#27ae60; margin-bottom:10px;">+ Tambah Plat</button>
 
     <input type="text" name="jenis_kendaraan" placeholder="Jenis Kendaraan">
     <input type="date" name="periode_awal" required>
@@ -102,6 +123,9 @@ tr:nth-child(even){ background:#f2f2f2; }
 <button id="btnLogout">Keluar</button>
 </div>
 
+<!-- Toast -->
+<div id="toast" class="toast">Pengajuan berhasil dikirim!</div>
+
 </section>
 
 <!-- Firebase -->
@@ -141,12 +165,12 @@ function createNopolField(){
     input.name = 'nomor_plat[]';
     input.placeholder = 'Nomor Plat';
     input.required = true;
-    input.style.marginBottom = '5px';
     div.appendChild(input);
 
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.textContent = '×';
+    btn.style.marginLeft = '5px';
     btn.addEventListener('click', ()=> div.remove());
     div.appendChild(btn);
     return div;
@@ -156,13 +180,20 @@ document.getElementById('tambahNopol').addEventListener('click', ()=>{
     nopolContainer.appendChild(createNopolField());
 });
 
+// ======= Toast Function =======
+function showToast(msg){
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(()=> toast.classList.remove('show'), 3000);
+}
+
 // ======= FORM PENGAJUAN =======
 document.getElementById('formPengajuan').addEventListener('submit', async e=>{
     e.preventDefault();
     const formData = new FormData(e.target);
     const data = {};
 
-    // Semua field wajib, default ''
     data.jenis_pengajuan = formData.get('jenis_pengajuan') || '';
     data.nama = formData.get('nama') || '';
     data.departement = formData.get('departement') || '';
@@ -173,7 +204,6 @@ document.getElementById('formPengajuan').addEventListener('submit', async e=>{
     data.status_admin = 'belum';
     data.timestamp = firebase.firestore.FieldValue.serverTimestamp();
 
-    // Nomor plat array
     const nopolInputs = document.querySelectorAll('input[name="nomor_plat[]"]');
     data.nomor_plat = [];
     nopolInputs.forEach(inp=>{
@@ -186,10 +216,12 @@ document.getElementById('formPengajuan').addEventListener('submit', async e=>{
 
     try{
         await db.collection('pengajuan').add(data);
-        alert("Pengajuan berhasil dikirim ke admin!");
+        // Reset form dan plat
         e.target.reset();
         nopolContainer.innerHTML='';
         nopolContainer.appendChild(createNopolField());
+        // Toast sukses
+        showToast("Pengajuan berhasil dikirim!");
     }catch(err){
         console.error(err);
         alert("Terjadi kesalahan: "+err.message);

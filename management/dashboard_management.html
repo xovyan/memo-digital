@@ -1,4 +1,3 @@
-<h1 style="color:red;">TEST UPDATE</h1>
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -219,11 +218,10 @@ document.getElementById("formPengajuan").addEventListener("submit", async functi
 
 e.preventDefault();
 
-const form = this;
 const btn = document.getElementById("btnKirim");
 btn.disabled = true;
 
-const formData = new FormData(form);
+const formData = new FormData(this);
 
 const data = {
 jenis_pengajuan: formData.get("jenis_pengajuan") || "",
@@ -254,68 +252,7 @@ try{
 
 await db.collection("pengajuan").add(data);
 
-/* ===== RESET SUPER BERSIH ===== */
-
-// reset semua input manual
-form.querySelectorAll("input, textarea, select").forEach(el=>{
-if(el.type !== "button" && el.type !== "submit"){
-el.value = "";
-}
-});
-
-// reset nopol ke 1 field saja
-resetNopol();
-
-// scroll ke atas biar terlihat kosong
-window.scrollTo({top:0, behavior:"smooth"});
-
-alert("Data berhasil dikirim ✅");
-
-}catch(err){
-alert("Gagal mengirim: "+err.message);
-}
-
-btn.disabled = false;
-
-});
-e.preventDefault();
-
-const form = this;
-const btn = document.getElementById("btnKirim");
-btn.disabled = true;
-
-const formData = new FormData(form);
-
-const data = {
-jenis_pengajuan: formData.get("jenis_pengajuan") || "",
-nama: formData.get("nama") || "",
-departement: formData.get("departement") || "",
-jenis_kendaraan: formData.get("jenis_kendaraan") || "",
-periode_awal: formData.get("periode_awal") || "",
-periode_akhir: formData.get("periode_akhir") || "",
-keterangan: formData.get("keterangan") || "",
-status_admin: "belum",
-timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-nomor_plat: []
-};
-
-document.querySelectorAll('input[name="nomor_plat[]"]').forEach(input=>{
-if(input.value.trim()!==""){
-data.nomor_plat.push(input.value.trim());
-}
-});
-
-if(data.nomor_plat.length===0){
-alert("Minimal 1 nomor plat harus diisi");
-btn.disabled = false;
-return;
-}
-
-try{
-await db.collection("pengajuan").add(data);
-
-/* ===== RESET PAKSA TOTAL ===== */
-form.reset();
+this.reset();
 resetNopol();
 
 alert("Data berhasil dikirim ✅");

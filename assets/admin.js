@@ -1,185 +1,105 @@
-import { db } from "./firebase-config.js";
-import {
-  collection,
-  onSnapshot,
-  updateDoc,
-  deleteDoc,
-  doc
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+// admin.js
+import { getFirestore, collection, onSnapshot, doc, updateDoc, query, orderBy } from "firebase/firestore";
+import { app } from "./firebase-config.js";
 
+const db = getFirestore(app);
+const colRef = collection(db, "pengajuan");
 const tableBody = document.getElementById("data-table");
 
+// Render data ke tabel
+function renderRow(docData, docId) {
+    const tr = document.createElement("tr");
 
-// =============================
-// REALTIME LOAD DATA
-// =============================
-onSnapshot(collection(db, "pengajuan"), (snapshot) => {
-
-  loadData(snapshot);
-
-});
-
-
-function loadData(snapshot){
-
-  let cari = document.querySelector('input[name="cari"]')?.value.toLowerCase() || "";
-  let bulan = document.querySelector('input[name="bulan"]')?.value || "";
-
-  tableBody.innerHTML = "";
-
-  snapshot.forEach((docSnap) => {
-
-    const data = docSnap.data();
-    const id = docSnap.id;
-
-    // =========================
-    // FILTER CARI
-    // =========================
-    if(cari){
-      let gabung = (
-        (data.nama_karyawan || "") +
-        (data.nomor_plat || "") +
-        (data.departement || "") +
-        (data.jenis_pengajuan || "") +
-        (data.jenis_kendaraan || "") +
-        (data.keterangan || "") +
-        (data.catatan_admin || "")
-      ).toLowerCase();
-
-      if(!gabung.includes(cari)) return;
-    }
-
-    // =========================
-    // FILTER BULAN
-    // =========================
-    if(bulan){
-      if(!data.periode_awal.startsWith(bulan)) return;
-    }
-
-    // =========================
-    // STATUS PERIODE (SAMA LOGIKA PHP)
-    // =========================
-    let today = new Date();
-    let awal = new Date(data.periode_awal);
-    let akhir = new Date(data.periode_akhir);
-
-    let statusPeriode = "-";
-
-    if(today >= awal && today <= akhir){
-      statusPeriode = "<span class='status-aktif'>Aktif</span>";
-    }
-    else if(today > akhir){
-      statusPeriode = "<span class='status-selesai'>Selesai</span>";
-    }
-
-    // =========================
-    // STATUS ADMIN
-    // =========================
-    let tombolAdmin = "";
-
-    if(data.status_admin === "sudah"){
-      tombolAdmin = "<span style='color:green;font-weight:bold;'>✔ Sudah Di Input</span>";
-    } else {
-      tombolAdmin = `
-        <button class="btn" style="background:green"
-        onclick="tandaiSelesai('${id}')">
-        Sudah Di Input
-        </button>
-      `;
-    }
-
-    // =========================
-    // FORMAT TANGGAL
-    // =========================
-    let formatAwal = formatTanggal(data.periode_awal);
-    let formatAkhir = formatTanggal(data.periode_akhir);
-
-    // =========================
-    // RENDER TABLE
-    // =========================
-    tableBody.innerHTML += `
-      <tr>
-        <td>${data.jenis_pengajuan || "-"}</td>
-        <td>${data.nama_karyawan || "-"}</td>
-        <td>${data.departement || "-"}</td>
-        <td>${data.nomor_plat || "-"}</td>
-        <td>${data.jenis_kendaraan || "-"}</td>
-        <td>${formatAwal} s/d ${formatAkhir}</td>
-        <td>${data.keterangan || "-"}</td>
-        <td>${statusPeriode}</td>
+    tr.innerHTML = `
+        <td>${docData.jenis_pengajuan}</td>
+        <td>${docData.nama_karyawan}</td>
+        <td>${docData.departement}</td>
+        <td>${docData.nomor_plat}</td>
+        <td>${docData.jenis_kendaraan}</td>
+        <td>${docData.periode_awal} s/d ${docData.periode_akhir}</td>
+        <td>${docData.keterangan}</td>
+        <td>${statusPeriode(docData.periode_awal, docData.periode_akhir)}</td>
+        <td><textarea data-id="${docId}">${docData.catatan_admin ?? ""}</textarea></td>
         <td>
-          <textarea class="catatan-admin"
-          onkeyup="autoSave('${id}', this.value)">
-          ${data.catatan_admin || ""}
-          </textarea>
+            <button class="btn btn-hapus" onclick="hapusData('${docId}')">Hapus</button>
+            <button class="btn btn-input" onclick="sudahDiInput('${docId}')">Sudah di Input</button>
         </td>
-        <td>
-          ${tombolAdmin}
-          <br><br>
-          <button class="btn btn-hapus"
-          onclick="hapusData('${id}')">
-          Hapus
-          </button>
-        </td>
-      </tr>
     `;
-  });
-}
 
+    tableBody.appendChild(tr);
 
-// =============================
-// FORMAT TANGGAL DD-MM-YYYY
-// =============================
-function formatTanggal(tanggal){
-
-  let d = new Date(tanggal);
-  let day = String(d.getDate()).padStart(2,'0');
-  let month = String(d.getMonth()+1).padStart(2,'0');
-  let year = d.getFullYear();
-
-  return day + "-" + month + "-" + year;
-}
-
-
-// =============================
-// UPDATE STATUS ADMIN
-// =============================
-window.tandaiSelesai = async function(id){
-
-  await updateDoc(doc(db,"pengajuan",id),{
-    status_admin:"sudah"
-  });
-
-};
-
-
-// =============================
-// HAPUS DATA
-// =============================
-window.hapusData = async function(id){
-
-  if(confirm("Yakin ingin menghapus data ini?")){
-    await deleteDoc(doc(db,"pengajuan",id));
-  }
-
-};
-
-
-// =============================
-// AUTO SAVE CATATAN
-// =============================
-let timeoutSave = null;
-
-window.autoSave = function(id,value){
-
-  clearTimeout(timeoutSave);
-
-  timeoutSave = setTimeout(async function(){
-
-    await updateDoc(doc(db,"pengajuan",id),{
-      catatan_admin:value
+    // Auto-save catatan
+    const ta = tr.querySelector("textarea");
+    let timeout = null;
+    ta.addEventListener("keyup", () => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => simpanCatatan(docId, ta.value), 800);
     });
+}
 
-  },800);
+// Status per periode
+function statusPeriode(start, end) {
+    const today = new Date();
+    const awal = new Date(start);
+    const akhir = new Date(end);
 
-};
+    if(today >= awal && today <= akhir) return "<span class='status-aktif'>Aktif</span>";
+    if(today > akhir) return "<span class='status-selesai'>Selesai</span>";
+    return "-";
+}
+
+// Auto-save catatan admin
+async function simpanCatatan(id, value) {
+    const docRef = doc(db, "pengajuan", id);
+    await updateDoc(docRef, { catatan_admin: value });
+}
+
+// Tombol Sudah di Input
+async function sudahDiInput(id){
+    const docRef = doc(db, "pengajuan", id);
+    await updateDoc(docRef, { managementStatus: "sudah di input" });
+}
+
+// Hapus data
+window.hapusData = async function(id){
+    if(confirm("Yakin ingin menghapus data ini?")){
+        const docRef = doc(db, "pengajuan", id);
+        await updateDoc(docRef, { deleted: true }); // bisa pakai flag deleted
+    }
+}
+
+// Filter data
+function loadData() {
+    const cari = document.getElementById("cari").value.toLowerCase();
+    const bulan = document.getElementById("bulan").value;
+
+    // Realtime listener
+    const q = query(colRef, orderBy("periode_awal", "desc"));
+    onSnapshot(q, snapshot => {
+        tableBody.innerHTML = "";
+        snapshot.forEach(docSnap => {
+            const data = docSnap.data();
+
+            // Skip yang dihapus jika pakai deleted flag
+            if(data.deleted) return;
+
+            // Filter cari nama / plat
+            if(cari && !(
+                (data.nama_karyawan ?? "").toLowerCase().includes(cari) ||
+                (data.nomor_plat ?? "").toLowerCase().includes(cari)
+            )) return;
+
+            // Filter bulan
+            if(bulan){
+                const tgl = new Date(data.periode_awal);
+                const tglBulan = `${tgl.getFullYear()}-${("0"+(tgl.getMonth()+1)).slice(-2)}`;
+                if(tglBulan !== bulan) return;
+            }
+
+            renderRow(data, docSnap.id);
+        });
+    });
+}
+
+window.loadData = loadData;
+loadData();

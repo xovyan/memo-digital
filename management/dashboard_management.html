@@ -9,17 +9,21 @@
 body { background:#f4f6f9; min-height:100vh; }
 header { background:#4e54c8; color:white; padding:15px; text-align:center; font-size:20px; }
 nav { display:flex; justify-content:space-around; background:white; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
-nav button { background:none; border:none; padding:15px; cursor:pointer; font-weight:bold; color:#4e54c8; }
+nav button { background:none; border:none; padding:15px; cursor:pointer; font-weight:bold; color:#4e54c8; flex:1; }
 nav button.active { border-bottom:3px solid #4e54c8; }
 section { padding:15px; }
-form input, form select, form textarea, form button { width:100%; margin-bottom:10px; padding:10px; border-radius:8px; border:1px solid #ccc; }
+form input, form select, form textarea, form button { width:100%; margin-bottom:10px; padding:10px; border-radius:8px; border:1px solid #ccc; font-size:14px; }
 form button { background:#4e54c8; color:white; border:none; font-weight:bold; cursor:pointer; }
-table { width:100%; border-collapse:collapse; margin-top:15px; background:white; }
-th, td { border:1px solid #ccc; padding:8px; text-align:center; }
+table { width:100%; border-collapse:collapse; margin-top:15px; background:white; font-size:13px; }
+th, td { border:1px solid #ccc; padding:6px; text-align:center; }
 th { background:#4e54c8; color:white; }
 tr:nth-child(even){ background:#f2f2f2; }
 .status-baru { color:red; font-weight:bold; }
 .status-sudah { color:green; font-weight:bold; }
+@media(max-width:600px){
+    table, th, td { font-size:12px; }
+    nav button { font-size:12px; padding:10px; }
+}
 </style>
 </head>
 <body>
@@ -39,27 +43,19 @@ tr:nth-child(even){ background:#f2f2f2; }
 <div class="tab" id="pengajuan">
 <h3>Form Pengajuan</h3>
 <form id="formPengajuan">
-    <label>Jenis Pengajuan:</label>
     <select name="jenis_pengajuan" required>
-        <option value="">--Pilih--</option>
+        <option value="">--Pilih Jenis--</option>
         <option value="free parkir">Free Parkir</option>
         <option value="compliment">Compliment</option>
         <option value="ubah plat">Ubah Plat</option>
     </select>
-    <label>Nama:</label>
-    <input type="text" name="nama" required>
-    <label>Departement:</label>
-    <input type="text" name="departement" required>
-    <label>Nomor Plat:</label>
-    <input type="text" name="nomor_plat" required>
-    <label>Jenis Kendaraan:</label>
-    <input type="text" name="jenis_kendaraan">
-    <label>Periode Awal:</label>
+    <input type="text" name="nama" placeholder="Nama" required>
+    <input type="text" name="departement" placeholder="Departement" required>
+    <input type="text" name="nomor_plat" placeholder="Nomor Plat" required>
+    <input type="text" name="jenis_kendaraan" placeholder="Jenis Kendaraan">
     <input type="date" name="periode_awal" required>
-    <label>Periode Akhir:</label>
     <input type="date" name="periode_akhir" required>
-    <label>Keterangan:</label>
-    <textarea name="keterangan"></textarea>
+    <textarea name="keterangan" placeholder="Keterangan"></textarea>
     <button type="submit">Kirim</button>
 </form>
 </div>
@@ -102,11 +98,10 @@ tr:nth-child(even){ background:#f2f2f2; }
 
 </section>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
 <script>
-// ======= FIREBASE CONFIG =======
 const firebaseConfig = {
     apiKey: "API_KEY",
     authDomain: "PROJECT_ID.firebaseapp.com",
@@ -117,7 +112,9 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+</script>
 
+<script>
 // ======= TABS =======
 const tabs = document.querySelectorAll('.tab-btn');
 tabs.forEach(btn=>{
@@ -125,10 +122,7 @@ tabs.forEach(btn=>{
         tabs.forEach(b=>b.classList.remove('active'));
         btn.classList.add('active');
         document.querySelectorAll('.tab').forEach(tab=>tab.style.display='none');
-        if(btn.dataset.tab==='pengajuan') document.getElementById('pengajuan').style.display='block';
-        if(btn.dataset.tab==='riwayat') document.getElementById('riwayat').style.display='block';
-        if(btn.dataset.tab==='ganti') document.getElementById('ganti').style.display='block';
-        if(btn.dataset.tab==='logout') document.getElementById('logout').style.display='block';
+        document.getElementById(btn.dataset.tab).style.display='block';
     });
 });
 
@@ -136,17 +130,22 @@ tabs.forEach(btn=>{
 document.getElementById('formPengajuan').addEventListener('submit', async e=>{
     e.preventDefault();
     const data = Object.fromEntries(new FormData(e.target).entries());
-    data.status_admin = "belum"; // default
+    data.status_admin = "belum"; // Default status admin
     data.timestamp = firebase.firestore.FieldValue.serverTimestamp();
 
-    await db.collection('pengajuan').add(data);
-    alert("Pengajuan berhasil dikirim ke admin!");
-    e.target.reset();
+    try{
+        await db.collection('pengajuan').add(data); // Masuk langsung ke admin
+        alert("Pengajuan berhasil dikirim ke admin!");
+        e.target.reset();
+    }catch(err){
+        alert("Terjadi kesalahan: "+err);
+    }
 });
 
 // ======= RIWAYAT =======
 function loadRiwayat(){
-    db.collection('pengajuan').orderBy('timestamp','desc').onSnapshot(snapshot=>{
+    db.collection('pengajuan').orderBy('timestamp','desc')
+    .onSnapshot(snapshot=>{
         const tbody = document.getElementById('riwayatData');
         tbody.innerHTML='';
         snapshot.forEach(doc=>{
@@ -160,7 +159,7 @@ function loadRiwayat(){
                 <td>${d.jenis_kendaraan||''}</td>
                 <td>${d.periode_awal} s/d ${d.periode_akhir}</td>
                 <td>${d.keterangan||''}</td>
-                <td>${d.status_admin==='sudah' ? '<span class="status-sudah">Sudah di Input</span>' : '<span class="status-baru">Belum di Input</span>'}</td>
+                <td>${d.status_admin==='sudah di input' ? '<span class="status-sudah">Sudah di Input</span>' : '<span class="status-baru">Belum di Input</span>'}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -168,11 +167,13 @@ function loadRiwayat(){
 }
 loadRiwayat();
 
-// ======= GANTI PASSWORD & LOGOUT =======
+// ======= GANTI PASSWORD =======
 document.getElementById('formGanti').addEventListener('submit', e=>{
     e.preventDefault();
     alert("Fungsi ganti password nanti disesuaikan Firebase Auth");
 });
+
+// ======= LOGOUT =======
 document.getElementById('btnLogout').addEventListener('click', ()=>{
     alert("Logout berhasil!"); 
     window.location.href="login_management.html";

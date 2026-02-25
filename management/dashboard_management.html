@@ -4,27 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard Management</title>
-<style>
-* { margin:0; padding:0; box-sizing:border-box; font-family:'Arial', sans-serif; }
-body { background:#f4f6f9; min-height:100vh; }
-header { background:#4e54c8; color:white; padding:15px; text-align:center; font-size:20px; }
-nav { display:flex; justify-content:space-around; background:white; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
-nav button { background:none; border:none; padding:15px; cursor:pointer; font-weight:bold; color:#4e54c8; flex:1; }
-nav button.active { border-bottom:3px solid #4e54c8; }
-section { padding:15px; }
-form input, form select, form textarea, form button { width:100%; margin-bottom:10px; padding:10px; border-radius:8px; border:1px solid #ccc; font-size:14px; }
-form button { background:#4e54c8; color:white; border:none; font-weight:bold; cursor:pointer; }
-table { width:100%; border-collapse:collapse; margin-top:15px; background:white; font-size:13px; }
-th, td { border:1px solid #ccc; padding:6px; text-align:center; }
-th { background:#4e54c8; color:white; }
-tr:nth-child(even){ background:#f2f2f2; }
-.status-baru { color:red; font-weight:bold; }
-.status-sudah { color:green; font-weight:bold; }
-@media(max-width:600px){
-    table, th, td { font-size:12px; }
-    nav button { font-size:12px; padding:10px; }
-}
-</style>
+<link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
 
@@ -32,14 +12,13 @@ tr:nth-child(even){ background:#f2f2f2; }
 
 <nav>
     <button class="tab-btn active" data-tab="pengajuan">Pengajuan</button>
-    <button class="tab-btn" data-tab="riwayat">Riwayat Pengajuan</button>
+    <button class="tab-btn" data-tab="riwayat">Riwayat</button>
     <button class="tab-btn" data-tab="ganti">Ganti Password</button>
     <button class="tab-btn" data-tab="logout">Log Out</button>
 </nav>
 
 <section id="content">
 
-<!-- Pengajuan -->
 <div class="tab" id="pengajuan">
 <h3>Form Pengajuan</h3>
 <form id="formPengajuan">
@@ -51,7 +30,7 @@ tr:nth-child(even){ background:#f2f2f2; }
     </select>
     <input type="text" name="nama" placeholder="Nama" required>
     <input type="text" name="departement" placeholder="Departement" required>
-    <input type="text" name="nomor_plat" placeholder="Nomor Plat" required>
+    <input type="text" name="nomor_plat" placeholder="Nomor Plat (pisah koma jika banyak)" required>
     <input type="text" name="jenis_kendaraan" placeholder="Jenis Kendaraan">
     <input type="date" name="periode_awal" required>
     <input type="date" name="periode_akhir" required>
@@ -60,7 +39,6 @@ tr:nth-child(even){ background:#f2f2f2; }
 </form>
 </div>
 
-<!-- Riwayat -->
 <div class="tab" id="riwayat" style="display:none;">
 <h3>Riwayat Pengajuan</h3>
 <table>
@@ -73,14 +51,13 @@ tr:nth-child(even){ background:#f2f2f2; }
 <th>Kendaraan</th>
 <th>Periode</th>
 <th>Keterangan</th>
-<th>Status</th>
+<th>Status Admin</th>
 </tr>
 </thead>
 <tbody id="riwayatData"></tbody>
 </table>
 </div>
 
-<!-- Ganti Password -->
 <div class="tab" id="ganti" style="display:none;">
 <h3>Ganti Password</h3>
 <form id="formGanti">
@@ -90,32 +67,18 @@ tr:nth-child(even){ background:#f2f2f2; }
 </form>
 </div>
 
-<!-- Logout -->
 <div class="tab" id="logout" style="display:none;">
 <h3>Log Out</h3>
 <button id="btnLogout">Keluar</button>
 </div>
 
-</section>
-
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script>
-const firebaseConfig = {
-    apiKey: "API_KEY",
-    authDomain: "PROJECT_ID.firebaseapp.com",
-    projectId: "PROJECT_ID",
-    storageBucket: "PROJECT_ID.appspot.com",
-    messagingSenderId: "SENDER_ID",
-    appId: "APP_ID"
-};
+<script type="module">
+import { firebaseConfig, db } from './assets/firebase-config.js';
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-</script>
 
-<script>
-// ======= TABS =======
+// Tabs
 const tabs = document.querySelectorAll('.tab-btn');
 tabs.forEach(btn=>{
     btn.addEventListener('click',()=>{
@@ -126,15 +89,19 @@ tabs.forEach(btn=>{
     });
 });
 
-// ======= FORM PENGAJUAN =======
+// Form Pengajuan
 document.getElementById('formPengajuan').addEventListener('submit', async e=>{
     e.preventDefault();
     const data = Object.fromEntries(new FormData(e.target).entries());
-    data.status_admin = "belum"; // Default status admin
+    data.status_admin = "belum"; 
     data.timestamp = firebase.firestore.FieldValue.serverTimestamp();
 
+    // Split nomor plat jika lebih dari 1
+    const nopolArr = data.nomor_plat.split(',').map(n=>n.trim()).filter(n=>n);
     try{
-        await db.collection('pengajuan').add(data); // Masuk langsung ke admin
+        for(const n of nopolArr){
+            await db.collection('pengajuan').add({...data, nomor_plat: n});
+        }
         alert("Pengajuan berhasil dikirim ke admin!");
         e.target.reset();
     }catch(err){
@@ -142,7 +109,7 @@ document.getElementById('formPengajuan').addEventListener('submit', async e=>{
     }
 });
 
-// ======= RIWAYAT =======
+// Riwayat Realtime
 function loadRiwayat(){
     db.collection('pengajuan').orderBy('timestamp','desc')
     .onSnapshot(snapshot=>{
@@ -159,7 +126,7 @@ function loadRiwayat(){
                 <td>${d.jenis_kendaraan||''}</td>
                 <td>${d.periode_awal} s/d ${d.periode_akhir}</td>
                 <td>${d.keterangan||''}</td>
-                <td>${d.status_admin==='sudah di input' ? '<span class="status-sudah">Sudah di Input</span>' : '<span class="status-baru">Belum di Input</span>'}</td>
+                <td>${d.status_admin==='sudah' ? '<span class="status-sudah">Sudah di Input</span>' : '<span class="status-baru">Belum di Input</span>'}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -167,18 +134,17 @@ function loadRiwayat(){
 }
 loadRiwayat();
 
-// ======= GANTI PASSWORD =======
+// Ganti Password
 document.getElementById('formGanti').addEventListener('submit', e=>{
     e.preventDefault();
-    alert("Fungsi ganti password nanti disesuaikan Firebase Auth");
+    alert("Ganti password akan menggunakan Firebase Auth nanti.");
 });
 
-// ======= LOGOUT =======
+// Logout
 document.getElementById('btnLogout').addEventListener('click', ()=>{
-    alert("Logout berhasil!"); 
+    localStorage.removeItem('management');
     window.location.href="login_management.html";
 });
 </script>
-
 </body>
 </html>

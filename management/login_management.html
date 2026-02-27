@@ -5,19 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login Management</title>
 <style>
-body{font-family:Arial;background:#f4f6f9;display:flex;justify-content:center;align-items:center;height:100vh}
-.login-box{background:#fff;padding:30px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.1);width:300px}
-.login-box h2{text-align:center;margin-bottom:20px;color:#4e54c8}
-.login-box input{width:100%;padding:10px;margin-bottom:10px;border-radius:8px;border:1px solid #ccc;font-size:14px}
-.login-box button{width:100%;padding:10px;background:#4e54c8;color:#fff;font-weight:bold;border:none;border-radius:8px;cursor:pointer}
-.error-msg{color:red;font-size:13px;text-align:center;margin-bottom:10px;display:none}
+body{font-family:Arial;background:#f4f6f9;display:flex;justify-content:center;align-items:center;height:100vh;}
+.login-box{background:white;padding:30px;border-radius:10px;box-shadow:0 4px 15px rgba(0,0,0,0.1);width:320px;}
+.login-box h2{text-align:center;margin-bottom:20px;}
+.login-box input{width:100%;padding:10px;margin-bottom:10px;border-radius:6px;border:1px solid #ccc;}
+.login-box button{width:100%;padding:10px;background:#4e54c8;color:white;border:none;border-radius:6px;font-weight:bold;cursor:pointer;}
+#errorMsg{color:red;text-align:center;margin-bottom:10px;display:none;}
 </style>
 </head>
 <body>
 
 <div class="login-box">
 <h2>Login Management</h2>
-<div class="error-msg" id="errorMsg"></div>
+<div id="errorMsg"></div>
 <input type="text" id="username" placeholder="Username">
 <input type="password" id="password" placeholder="Password">
 <button id="btnLogin">Login</button>
@@ -35,48 +35,34 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-const errorMsg = document.getElementById('errorMsg');
-
 document.getElementById('btnLogin').addEventListener('click', async ()=>{
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value.trim();
-  
+  const errorMsg = document.getElementById('errorMsg');
+
   if(!username || !password){
-    errorMsg.style.display="block";
-    errorMsg.textContent="Isi username & password!";
+    errorMsg.style.display="block"; errorMsg.textContent="Isi username & password!";
     return;
   }
-  
-  try{
+
+  try {
     const query = await db.collection('users').where('username','==',username).get();
-    if(query.empty){
-      errorMsg.style.display="block";
-      errorMsg.textContent="Username tidak ditemukan!";
-      return;
-    }
+    if(query.empty){ errorMsg.style.display="block"; errorMsg.textContent="Username tidak ditemukan!"; return; }
     const doc = query.docs[0];
     const data = doc.data();
-    
-    if(data.password !== password){
-      errorMsg.style.display="block";
-      errorMsg.textContent="Password salah!";
-      return;
-    }
-    
-    // Simpan session
+    if(data.password !== password){ errorMsg.style.display="block"; errorMsg.textContent="Password salah!"; return; }
+
     localStorage.setItem('userSession', JSON.stringify({
       username: data.username,
       role: data.role,
       id: doc.id
     }));
-    
-    // Redirect dashboard management
-    window.location.href="dashboard_management.html";
-    
-  }catch(err){
-    console.error(err);
-    errorMsg.style.display="block";
-    errorMsg.textContent="Terjadi kesalahan, coba lagi!";
+
+    setTimeout(()=>{ window.location.href="dashboard_management.html"; },50);
+
+  } catch(e){
+    console.error(e);
+    errorMsg.style.display="block"; errorMsg.textContent="Terjadi kesalahan, coba lagi!";
   }
 });
 </script>

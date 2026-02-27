@@ -3,96 +3,111 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LOGIN</title>
+<title>LOGIN MODERN</title>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; font-family: 'Arial', sans-serif; }
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Poppins', sans-serif; }
 
-/* Body dengan background gambar */
+/* Background full image */
 body {
     display:flex;
     justify-content:center;
     align-items:center;
     min-height:100vh;
-    background: url('https://images.unsplash.com/photo-1581091012184-0b6e1d0b7f5e?auto=format&fit=crop&w=1350&q=80') no-repeat center center fixed;
+    background: url('https://images.unsplash.com/photo-1601924928373-0b620f1fae53?auto=format&fit=crop&w=1350&q=80') no-repeat center center fixed;
     background-size: cover;
     position: relative;
 }
 
-/* Overlay gelap untuk kontras login */
+/* Overlay gelap */
 body::before {
     content: "";
     position: absolute;
     top:0; left:0; right:0; bottom:0;
-    background: rgba(0,0,0,0.5); /* gelap transparan */
-    z-index: 0;
+    background: rgba(0,0,0,0.6);
+    z-index:0;
 }
 
-/* Container Login */
+/* Card login modern */
 .login-container {
     width: 90%;
     max-width: 400px;
-    background:white;
-    border-radius: 15px;
-    padding: 30px 25px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    z-index: 1; /* di atas overlay */
+    background: rgba(255,255,255,0.95);
+    border-radius: 20px;
+    padding: 40px 30px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+    z-index:1;
     position: relative;
+    transition: transform 0.3s;
+}
+.login-container:hover {
+    transform: translateY(-5px);
 }
 
 /* Heading */
 .login-container h2 { 
     text-align:center; 
-    margin-bottom:25px; 
+    margin-bottom:30px; 
     color: #4e54c8; 
+    font-weight: 700;
+    letter-spacing: 1px;
 }
 
-/* Input fields */
+/* Input fields modern */
 .login-container input[type="text"],
 .login-container input[type="password"] {
     width:100%;
-    padding:12px 15px;
-    margin:10px 0;
+    padding:14px 18px;
+    margin:12px 0;
     border:1px solid #ccc;
-    border-radius:8px;
+    border-radius:10px;
     font-size:16px;
+    transition: 0.3s;
+}
+.login-container input:focus {
+    border-color:#4e54c8;
+    box-shadow: 0 0 5px #4e54c8;
+    outline:none;
 }
 
-/* Button */
+/* Button modern */
 .login-container button {
     width:100%;
-    padding:12px;
-    margin-top:15px;
+    padding:14px;
+    margin-top:20px;
     border:none;
-    border-radius:8px;
-    background:#4e54c8;
+    border-radius:12px;
+    background: linear-gradient(135deg,#4e54c8,#8f94fb);
     color:white;
     font-size:16px;
     font-weight:bold;
     cursor:pointer;
-    transition:0.3s;
+    transition: 0.3s;
 }
 .login-container button:hover {
-    background:#3b3f9a;
+    background: linear-gradient(135deg,#3b3f9a,#6f71e5);
+    transform: translateY(-2px);
 }
 
 /* Link lupa password */
 .login-container .link {
     display:block;
-    margin-top:15px;
+    margin-top:18px;
     text-align:center;
     color:#4e54c8;
     text-decoration:none;
     font-size:14px;
+    transition: 0.3s;
 }
 .login-container .link:hover {
     text-decoration:underline;
+    color:#8f94fb;
 }
 </style>
 </head>
 <body>
 
 <div class="login-container">
-    <h2 style="color:blue">PT SECURINDO PACKATAMA INDONESIA</h2>
+    <h2>PT SECURINDO PACKATAMA INDONESIA</h2>
     <form id="loginForm">
         <input type="text" name="username" placeholder="Username" required>
         <input type="password" name="password" placeholder="Password" required>

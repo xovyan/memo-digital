@@ -114,7 +114,6 @@ const firebaseConfig = {
   storageBucket: "memodigital-57c0c.firebasestorage.app",
   messagingSenderId: "612241421208",
   appId: "1:612241421208:web:119b13353da40aa51871ed",
-
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
@@ -179,28 +178,36 @@ setTimeout(()=>popup.style.display="none",2000);
 btn.disabled=false;
 });
 
-/* RIWAYAT */
+/* RIWAYAT - PLAT TERPISAH */
 db.collection("pengajuan")
 .orderBy("timestamp","desc")
 .onSnapshot(snapshot=>{
 const tbody=document.getElementById("riwayatData");
 tbody.innerHTML="";
+
 snapshot.forEach(doc=>{
 const d=doc.data();
+const daftarPlat=Array.isArray(d.nomor_plat)?d.nomor_plat:[];
+
+daftarPlat.forEach(plat=>{
 tbody.innerHTML+=`
 <tr>
 <td>${d.jenis_pengajuan||""}</td>
 <td>${d.nama||""}</td>
 <td>${d.departement||""}</td>
-<td>${Array.isArray(d.nomor_plat)?d.nomor_plat.join(", "):""}</td>
+<td>${plat}</td>
 <td>${d.jenis_kendaraan||""}</td>
 <td>${d.periode_awal||""} s/d ${d.periode_akhir||""}</td>
 <td>${d.status_admin==="sudah di input"
 ?'<span class="status-sudah">Sudah</span>'
-:'<span class="status-baru">Belum</span>'}</td>
+:'<span class="status-baru">Belum</span>'}
+</td>
 </tr>`;
+});
+
 });
 });
 </script>
+
 </body>
 </html>

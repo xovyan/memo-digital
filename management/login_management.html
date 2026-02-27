@@ -49,7 +49,7 @@ document.getElementById("loginBtn").addEventListener("click", async ()=>{
   if(!usernameInput || !passwordInput) return showPopup("Isi username dan password");
 
   try{
-    // Ambil dokumen sesuai usernameInput sebagai ID
+    // Ambil dokumen sesuai input
     const docRef = db.collection("users").doc(usernameInput);
     const docSnap = await docRef.get();
 
@@ -58,14 +58,18 @@ document.getElementById("loginBtn").addEventListener("click", async ()=>{
     }
 
     const userData = docSnap.data();
+
     if(userData.password !== passwordInput){
       return showPopup("Password salah");
     }
 
     // Simpan session
-    localStorage.setItem("userSession", JSON.stringify(userData));
+    localStorage.setItem("userSession", JSON.stringify({
+      username: usernameInput,
+      role: userData.role
+    }));
 
-    // Redirect berdasarkan role
+    // Redirect sesuai role
     if(userData.role.toLowerCase() === "management"){
       window.location.href = "dashboard_management.html";
     } else if(userData.role.toLowerCase() === "admin"){

@@ -17,9 +17,14 @@ form input,form select,form textarea,form button{
 width:100%;margin-bottom:10px;padding:10px;border-radius:8px;border:1px solid #ccc;font-size:14px
 }
 form button{background:#4e54c8;color:#fff;font-weight:bold;border:none;cursor:pointer}
-.nopol-group{display:flex;gap:5px;margin-bottom:5px}
+.nopol-group{display:flex;gap:5px;margin-bottom:5px;align-items:center}
 .nopol-group input{flex:1}
-.table-wrapper{overflow-x:auto;}
+.nopol-group button{
+  background:red;color:#fff;border:none;border-radius:6px;padding:0 8px;cursor:pointer;font-size:14px;
+}
+#addNopol{
+  background:#27ae60; padding:6px 12px; font-size:14px; border-radius:6px; margin-top:5px; display:inline-block;
+}
 table{width:100%;border-collapse:collapse;margin-top:15px;background:#fff;font-size:13px}
 th,td{border:1px solid #ccc;padding:6px;text-align:center}
 th{background:#4e54c8;color:#fff}
@@ -30,8 +35,9 @@ position:fixed;top:20px;left:50%;transform:translateX(-50%);
 background:#16a34a;color:#fff;padding:12px 20px;border-radius:8px;
 box-shadow:0 4px 10px rgba(0,0,0,0.2);display:none;z-index:999;
 }
-.filter-area{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;align-items:flex-end;}
-.filter-area select,.filter-area input,.filter-area button{padding:6px;border-radius:6px;border:1px solid #ccc;font-size:13px;}
+.filter-area{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.filter-area input, .filter-area select{flex:1;padding:6px;border-radius:6px;border:1px solid #ccc}
+.filter-area button{padding:6px 12px;border-radius:6px;background:#4e54c8;color:#fff;border:none;cursor:pointer}
 </style>
 </head>
 <body>
@@ -51,6 +57,7 @@ box-shadow:0 4px 10px rgba(0,0,0,0.2);display:none;z-index:999;
 <!-- PENGAJUAN -->
 <div class="tab" id="pengajuan">
 <form id="formPengajuan" autocomplete="off">
+
 <select name="jenis_pengajuan" required>
 <option value="">-- Pilih Jenis --</option>
 <option value="Free Parkir">Free Parkir</option>
@@ -62,7 +69,7 @@ box-shadow:0 4px 10px rgba(0,0,0,0.2);display:none;z-index:999;
 <input type="text" name="departement" placeholder="Departement" required>
 
 <div id="nopolContainer"></div>
-<button type="button" id="addNopol" style="background:#27ae60">+ Tambah Plat</button>
+<button type="button" id="addNopol">+ Tambah Plat</button>
 
 <input type="text" name="jenis_kendaraan" placeholder="Jenis Kendaraan">
 <input type="date" name="periode_awal" required>
@@ -70,6 +77,7 @@ box-shadow:0 4px 10px rgba(0,0,0,0.2);display:none;z-index:999;
 <textarea name="keterangan" placeholder="Keterangan"></textarea>
 
 <button type="submit" id="btnKirim">Kirim</button>
+
 </form>
 </div>
 
@@ -77,19 +85,12 @@ box-shadow:0 4px 10px rgba(0,0,0,0.2);display:none;z-index:999;
 <div class="tab" id="riwayat" style="display:none">
 
 <div class="filter-area">
-<input type="text" id="filterNama" placeholder="Cari Nama">
-<input type="text" id="filterDept" placeholder="Cari Departement">
-<input type="text" id="filterPlat" placeholder="Cari Plat">
-<select id="filterStatus">
-<option value="">-- Semua Status --</option>
-<option value="Belum">Belum</option>
-<option value="Sudah">Sudah</option>
-</select>
+<input type="text" id="filterCari" placeholder="Cari Nama, Dept, Plat, Status">
+<input type="month" id="filterBulan">
 <button id="btnFilter">Filter</button>
 <button id="btnExport">Export Excel</button>
 </div>
 
-<div class="table-wrapper">
 <table>
 <thead>
 <tr>
@@ -100,12 +101,12 @@ box-shadow:0 4px 10px rgba(0,0,0,0.2);display:none;z-index:999;
 <th>Kendaraan</th>
 <th>Periode</th>
 <th>Keterangan</th>
+<th>Status</th>
 <th>Status Admin</th>
 </tr>
 </thead>
 <tbody id="riwayatData"></tbody>
 </table>
-</div>
 </div>
 
 <div class="tab" id="ganti" style="display:none">
@@ -128,9 +129,9 @@ box-shadow:0 4px 10px rgba(0,0,0,0.2);display:none;z-index:999;
 
 <script>
 const firebaseConfig = {
-  apiKey: "API_KEY_KAMU",
-  authDomain: "AUTH_DOMAIN_KAMU",
-  projectId: "PROJECT_ID_KAMU",
+  apiKey: "AIzaSyCaPM6CNaiK-VZYR0-dkrrYMANiWi8pUGw",
+  authDomain: "memodigital-57c0c.firebaseapp.com",
+  projectId: "memodigital-57c0c",
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
@@ -157,7 +158,10 @@ if(document.querySelectorAll('[name="nomor_plat[]"]').length>1)div.remove();
 };
 return div;
 }
-function resetNopol(){ nopolContainer.innerHTML=""; nopolContainer.appendChild(createNopol()); }
+function resetNopol(){
+nopolContainer.innerHTML="";
+nopolContainer.appendChild(createNopol());
+}
 resetNopol();
 document.getElementById("addNopol").onclick=()=>nopolContainer.appendChild(createNopol());
 
@@ -169,12 +173,14 @@ btn.disabled=true;
 
 const formData=new FormData(this);
 let nomor_plat=[];
-document.querySelectorAll('[name="nomor_plat[]"]').forEach(i=>{ if(i.value.trim()!=="") nomor_plat.push(i.value.trim()); });
+document.querySelectorAll('[name="nomor_plat[]"]').forEach(i=>{
+if(i.value.trim()!=="")nomor_plat.push(i.value.trim());
+});
 if(nomor_plat.length===0){btn.disabled=false;return;}
 
 await db.collection("pengajuan").add({
 ...Object.fromEntries(formData.entries()),
-nomor_plat,
+nomor_plat: nomor_plat,
 status_admin:"Belum",
 timestamp:firebase.firestore.FieldValue.serverTimestamp()
 });
@@ -192,32 +198,36 @@ btn.disabled=false;
 
 /* RIWAYAT */
 let allData = [];
+db.collection("pengajuan")
+.orderBy("timestamp","desc")
+.onSnapshot(snapshot=>{
+allData=[];
+snapshot.forEach(doc=>{
+allData.push({...doc.data(), id:doc.id});
+});
+renderTable();
+});
 
-function renderTable(data){
+function renderTable(){
 const tbody=document.getElementById("riwayatData");
 tbody.innerHTML="";
 
-const filterNama=document.getElementById("filterNama").value.toLowerCase();
-const filterDept=document.getElementById("filterDept").value.toLowerCase();
-const filterPlat=document.getElementById("filterPlat").value.toLowerCase();
-const filterStatus=document.getElementById("filterStatus").value;
+const cari=document.getElementById("filterCari").value.toLowerCase();
+const bulan=document.getElementById("filterBulan").value;
 
-data.forEach(doc=>{
-const d=doc.data();
-const daftarPlat=Array.isArray(d.nomor_plat)?d.nomor_plat:[d.nomor_plat];
+allData.forEach(d=>{
+let daftarPlat=Array.isArray(d.nomor_plat)?d.nomor_plat:d.nomor_plat?[d.nomor_plat]:[];
 
-// filter
-if(filterNama && !d.nama.toLowerCase().includes(filterNama)) return;
-if(filterDept && !d.departement.toLowerCase().includes(filterDept)) return;
-if(filterStatus && d.status_admin!==filterStatus) return;
+if(cari){
+const searchStr = [d.nama,d.departement,...daftarPlat,(d.status_admin||"")].join(" ").toLowerCase();
+if(!searchStr.includes(cari)) return;
+}
 
-let platMatch=false;
-daftarPlat.forEach(p=>{
-if(!filterPlat || p.toLowerCase().includes(filterPlat)) platMatch=true;
-});
-if(!platMatch) return;
+if(bulan){
+const bln=d.periode_awal?.substring(0,7);
+if(bln!==bulan) return;
+}
 
-// render per plat
 daftarPlat.forEach(plat=>{
 tbody.innerHTML+=`
 <tr>
@@ -228,44 +238,41 @@ tbody.innerHTML+=`
 <td>${d.jenis_kendaraan||""}</td>
 <td>${d.periode_awal||""} s/d ${d.periode_akhir||""}</td>
 <td>${d.keterangan||""}</td>
-<td>${d.status_admin==="Sudah"?'<span class="status-sudah">Sudah</span>':'<span class="status-baru">Belum</span>'}</td>
+<td>${d.status_admin==="Sudah" ? '<span class="status-sudah">Sudah</span>' : '<span class="status-baru">Belum</span>'}</td>
+<td>${d.status_admin||""}</td>
 </tr>`;
 });
 });
 }
 
-db.collection("pengajuan").orderBy("timestamp","desc").onSnapshot(snapshot=>{
-allData=snapshot.docs;
-renderTable(allData);
-});
-
-document.getElementById("btnFilter").onclick=()=>renderTable(allData);
-
-/* EXPORT EXCEL */
+/* FILTER & EXPORT */
+document.getElementById("btnFilter").onclick=renderTable;
 document.getElementById("btnExport").onclick=()=>{
-const rows=[];
-allData.forEach(doc=>{
-const d=doc.data();
-const daftarPlat=Array.isArray(d.nomor_plat)?d.nomor_plat:[d.nomor_plat];
-daftarPlat.forEach(plat=>{
-rows.push({
-Jenis:d.jenis_pengajuan||"",
-Nama:d.nama||"",
-Departement:d.departement||"",
-Plat:plat||"",
-Kendaraan:d.jenis_kendaraan||"",
-Periode:d.periode_awal+" s/d "+d.periode_akhir||"",
-Keterangan:d.keterangan||"",
-Status:d.status_admin||""
+const rows=document.querySelectorAll("#riwayatData tr");
+let dataExport=[];
+rows.forEach(r=>{
+const cells=r.querySelectorAll("td");
+if(cells.length>0){
+dataExport.push({
+Jenis: cells[0].innerText,
+Nama: cells[1].innerText,
+Dept: cells[2].innerText,
+Plat: cells[3].innerText,
+Kendaraan: cells[4].innerText,
+Periode: cells[5].innerText,
+Keterangan: cells[6].innerText,
+Status: cells[7].innerText,
+Status_Admin: cells[8].innerText
 });
+}
 });
-});
-if(rows.length===0){ alert("Tidak ada data"); return; }
-const ws=XLSX.utils.json_to_sheet(rows);
+if(dataExport.length===0){alert("Tidak ada data");return;}
+const ws=XLSX.utils.json_to_sheet(dataExport);
 const wb=XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(wb,ws,"Data");
-XLSX.writeFile(wb,"Data_Pengajuan.xlsx");
+XLSX.utils.book_append_sheet(wb,ws,"Riwayat");
+XLSX.writeFile(wb,"Riwayat_Pengajuan.xlsx");
 };
 </script>
+
 </body>
 </html>

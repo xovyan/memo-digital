@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+<<<<<<< HEAD
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Login Admin</title>
@@ -8,6 +9,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="../assets/firebase-config.js"></script>
+<<<<<<< HEAD
 
 <style>
 /* Reset & basic */
@@ -71,10 +73,13 @@ body, html {
     font-size: 14px;
 }
 </style>
+=======
+>>>>>>> f726e28 (Perbaiki staging, hapus embedded repo)
 </head>
 <body>
 
 <div class="login-container">
+<<<<<<< HEAD
   <h2>Login Admin</h2>
   <form id="loginForm">
     <input type="text" id="username" placeholder="Username" required>
@@ -86,19 +91,40 @@ body, html {
 
 <script>
 // Hardcoded admin account (awal)
+=======
+<h2>Login Admin</h2>
+<form id="loginForm">
+  <input type="text" id="username" placeholder="Username" required><br><br>
+  <input type="password" id="password" placeholder="Password" required><br><br>
+  <button type="submit">Login</button>
+</form>
+<p id="msg" style="color:red;"></p>
+</div>
+
+<script>
+// Contoh admin hardcoded (untuk awal)
+>>>>>>> f726e28 (Perbaiki staging, hapus embedded repo)
 const adminUsers = [
   {username: "admin", password: "1234"}
 ];
 
 document.getElementById('loginForm').addEventListener('submit', (e)=>{
     e.preventDefault();
+<<<<<<< HEAD
     const u = document.getElementById('username').value.trim();
     const p = document.getElementById('password').value.trim();
+=======
+    const u = document.getElementById('username').value;
+    const p = document.getElementById('password').value;
+>>>>>>> f726e28 (Perbaiki staging, hapus embedded repo)
 
     const found = adminUsers.find(a => a.username===u && a.password===p);
     if(found){
         localStorage.setItem('admin', u);
+<<<<<<< HEAD
         // arahkan ke dashboard admin
+=======
+>>>>>>> f726e28 (Perbaiki staging, hapus embedded repo)
         window.location.href = "dashboard_admin.html";
     }else{
         document.getElementById('msg').innerText = "Username atau password salah";

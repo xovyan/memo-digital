@@ -42,7 +42,7 @@ th{background:#4e54c8;color:#fff}
 </nav>
 
 <section>
-
+<!-- PENGAJUAN -->
 <div class="tab" id="pengajuan">
 <form id="formPengajuan" autocomplete="off">
 <select name="jenis_pengajuan" required>
@@ -63,6 +63,7 @@ th{background:#4e54c8;color:#fff}
 </form>
 </div>
 
+<!-- RIWAYAT -->
 <div class="tab" id="riwayat" style="display:none">
 <div class="filter-area">
 <input type="text" id="cariFilter" placeholder="Cari Nama/Dept/Plat/Status">
@@ -88,6 +89,7 @@ th{background:#4e54c8;color:#fff}
 </table>
 </div>
 
+<!-- GANTI PASSWORD -->
 <div class="tab" id="ganti" style="display:none">
 <form id="formGantiPassword">
 <input type="password" id="oldPassword" placeholder="Password Lama" required>
@@ -121,16 +123,11 @@ const loginUser = sessionStorage.getItem('managementLogin');
 const loginRole = sessionStorage.getItem('managementRole');
 if(!loginUser || loginRole!=='management'){
   alert('Silahkan login terlebih dahulu');
-  window.location.href='login.html';
+  window.location.href='login_management.html';
 }
 
-/* TIMEOUT SESSION 15 MENIT */
-let idleTime=0;
-setInterval(()=>{idleTime++; if(idleTime>15){ logout(); }},60000);
-document.onmousemove=document.onkeypress=()=>{idleTime=0;}
-
 /* LOGOUT */
-function logout(){ sessionStorage.clear(); window.location.href='login.html'; }
+function logout(){ sessionStorage.clear(); window.location.href='login_management.html'; }
 
 /* TAB */
 document.querySelectorAll(".tab-btn").forEach(btn=>{
@@ -160,19 +157,16 @@ document.getElementById("addNopol").onclick=()=>nopolContainer.appendChild(creat
 document.getElementById("formPengajuan").addEventListener("submit",async function(e){
 e.preventDefault();
 const btn=document.getElementById("btnKirim"); btn.disabled=true;
-
 const formData=new FormData(this);
 let nomor_plat=[];
 document.querySelectorAll('[name="nomor_plat[]"]').forEach(i=>{if(i.value.trim()!=="")nomor_plat.push(i.value.trim());});
 if(nomor_plat.length===0){btn.disabled=false; return;}
-
 await db.collection("pengajuan").add({
 ...Object.fromEntries(formData.entries()),
 nomor_plat: nomor_plat,
 status_admin_per_plat: nomor_plat.map(()=> "Belum"),
 timestamp:firebase.firestore.FieldValue.serverTimestamp()
 });
-
 this.reset(); resetNopol();
 window.scrollTo({top:0,behavior:"smooth"});
 const popup=document.getElementById("popup");
@@ -181,7 +175,7 @@ setTimeout(()=>popup.style.display="none",2000);
 btn.disabled=false;
 });
 
-/* RIWAYAT & FILTER */
+/* RIWAYAT & EXPORT */
 let riwayatSnapshot=null;
 function loadRiwayat(){
 const cari=document.getElementById("cariFilter").value.toLowerCase();
@@ -192,24 +186,17 @@ riwayatSnapshot=db.collection("pengajuan").orderBy("timestamp","desc")
 .onSnapshot(snapshot=>{
 const tbody=document.getElementById("riwayatData"); tbody.innerHTML="";
 let totalBelum=0;
-
 snapshot.forEach(doc=>{
 const d=doc.data();
 let daftarPlat=Array.isArray(d.nomor_plat)?d.nomor_plat:d.nomor_plat?[d.nomor_plat]:[];
 let statusPlat=Array.isArray(d.status_admin_per_plat)?d.status_admin_per_plat:daftarPlat.map(()=> "Belum");
-
 let awalBln=d.periode_awal?.substring(0,7) || "";
-
 daftarPlat.forEach((plat,index)=>{
 let match=true;
-if(cari){
-  match = [d.nama,d.departement,plat,statusPlat[index]].some(v=>String(v).toLowerCase().includes(cari));
-}
+if(cari) match = [d.nama,d.departement,plat,statusPlat[index]].some(v=>String(v).toLowerCase().includes(cari));
 if(bulan && bulan!==awalBln) match=false;
-
 if(match){
-tbody.innerHTML+=`
-<tr>
+tbody.innerHTML+=`<tr>
 <td>${d.jenis_pengajuan||""}</td>
 <td>${d.nama||""}</td>
 <td>${d.departement||""}</td>
@@ -220,16 +207,13 @@ tbody.innerHTML+=`
 <td>${statusPlat[index]==="Sudah"?'<span class="status-sudah">Sudah</span>':'<span class="status-baru">Belum</span>'}</td>
 </tr>`;
 }
-
 if(statusPlat[index]==="Belum") totalBelum++;
 });
 });
 document.getElementById("totalBelum").textContent=totalBelum;
 });
 }
-loadRiwayat();
 
-/* EXPORT EXCEL */
 function exportExcel(){
 let dataExport=[];
 document.querySelectorAll("#riwayatData tr").forEach(row=>{
@@ -260,11 +244,9 @@ e.preventDefault();
 const oldPass=document.getElementById('oldPassword').value;
 const newPass=document.getElementById('newPassword').value;
 const msg=document.getElementById('passMsg');
-
 if(!oldPass || !newPass){ msg.textContent="Isi semua field"; return; }
 
 const username = sessionStorage.getItem('managementLogin');
-
 const userRef = db.collection('users').doc(username);
 const userDoc = await userRef.get();
 if(!userDoc.exists){ msg.textContent="User tidak ditemukan"; return; }

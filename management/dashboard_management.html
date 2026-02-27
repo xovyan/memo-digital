@@ -62,6 +62,9 @@ th{background:#4e54c8;color:#fff}
 .filter-area input, .filter-area select, .filter-area button{
   padding:6px 10px;font-size:13px;border-radius:6px;border:1px solid #ccc;
 }
+.summary-box{
+  margin-bottom:10px;padding:10px;background:#eafaf1;border:1px solid #27ae60;border-radius:6px;font-weight:bold;
+}
 </style>
 </head>
 <body>
@@ -106,11 +109,14 @@ th{background:#4e54c8;color:#fff}
 <!-- RIWAYAT -->
 <div class="tab" id="riwayat" style="display:none">
 
+<div class="summary-box">
+TOTAL BELUM INPUT: <span id="totalBelum">0</span>
+</div>
+
 <div class="filter-area">
 <input type="text" id="cariFilter" placeholder="Cari Nama/Dept/Plat/Status">
 <input type="month" id="bulanFilter">
 <button onclick="loadRiwayat()">Filter</button>
-<button onclick="exportExcel()">Export Excel</button>
 </div>
 
 <table>
@@ -124,6 +130,7 @@ th{background:#4e54c8;color:#fff}
 <th>Periode</th>
 <th>Keterangan</th>
 <th>Status</th>
+<th>Aksi</th>
 </tr>
 </thead>
 <tbody id="riwayatData"></tbody>
@@ -146,7 +153,6 @@ th{background:#4e54c8;color:#fff}
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <script>
 const firebaseConfig = {
@@ -170,122 +176,121 @@ document.getElementById(btn.dataset.tab).style.display="block";
 /* NOPOL */
 const nopolContainer=document.getElementById("nopolContainer");
 function createNopol(){
-const div=document.createElement("div");
-div.className="nopol-group";
-div.innerHTML=`<input type="text" name="nomor_plat[]" required>
-<button type="button">×</button>`;
-div.querySelector("button").onclick=()=>{
-if(document.querySelectorAll('[name="nomor_plat[]"]').length>1)div.remove();
-};
-return div;
+  const div=document.createElement("div");
+  div.className="nopol-group";
+  div.innerHTML=`<input type="text" name="nomor_plat[]" required>
+  <button type="button">×</button>`;
+  div.querySelector("button").onclick=()=>{
+    if(document.querySelectorAll('[name="nomor_plat[]"]').length>1) div.remove();
+  };
+  return div;
 }
 function resetNopol(){
-nopolContainer.innerHTML="";
-nopolContainer.appendChild(createNopol());
+  nopolContainer.innerHTML="";
+  nopolContainer.appendChild(createNopol());
 }
 resetNopol();
 document.getElementById("addNopol").onclick=()=>nopolContainer.appendChild(createNopol());
 
 /* SUBMIT PENGAJUAN */
 document.getElementById("formPengajuan").addEventListener("submit",async function(e){
-e.preventDefault();
-const btn=document.getElementById("btnKirim");
-btn.disabled=true;
+  e.preventDefault();
+  const btn = document.getElementById("btnKirim");
+  btn.disabled = true;
 
-const formData=new FormData(this);
-let nomor_plat=[];
-document.querySelectorAll('[name="nomor_plat[]"]').forEach(i=>{
-if(i.value.trim()!=="")nomor_plat.push(i.value.trim());
-});
-if(nomor_plat.length===0){btn.disabled=false;return;}
+  const formData = new FormData(this);
+  let nomor_plat=[];
+  document.querySelectorAll('[name="nomor_plat[]"]').forEach(i=>{
+    if(i.value.trim()!=="") nomor_plat.push(i.value.trim());
+  });
+  if(nomor_plat.length===0){btn.disabled=false;return;}
 
-await db.collection("pengajuan").add({
-...Object.fromEntries(formData.entries()),
-nomor_plat: nomor_plat,
-status_admin:"Belum",
-timestamp:firebase.firestore.FieldValue.serverTimestamp()
-});
+  await db.collection("pengajuan").add({
+    ...Object.fromEntries(formData.entries()),
+    nomor_plat: nomor_plat,
+    status_admin_per_plat: nomor_plat.map(p=>"Belum"),
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  });
 
-this.reset();
-resetNopol();
-window.scrollTo({top:0,behavior:"smooth"});
-const popup=document.getElementById("popup");
-popup.style.display="block";
-setTimeout(()=>popup.style.display="none",2000);
-btn.disabled=false;
+  this.reset();
+  resetNopol();
+  window.scrollTo({top:0,behavior:"smooth"});
+  const popup=document.getElementById("popup");
+  popup.style.display="block";
+  setTimeout(()=>popup.style.display="none",2000);
+  btn.disabled=false;
 });
 
 /* RIWAYAT */
-let riwayatSnapshot=null;
+let riwayatSnapshot = null;
 function loadRiwayat(){
-const cari=document.getElementById("cariFilter").value.toLowerCase();
-const bulan=document.getElementById("bulanFilter").value;
+  const cari=document.getElementById("cariFilter").value.toLowerCase();
+  const bulan=document.getElementById("bulanFilter").value;
 
-if(riwayatSnapshot) riwayatSnapshot(); // stop snapshot lama
+  if(riwayatSnapshot) riwayatSnapshot(); // stop snapshot lama
 
-riwayatSnapshot=db.collection("pengajuan").orderBy("timestamp","desc")
-.onSnapshot(snapshot=>{
-const tbody=document.getElementById("riwayatData");
-tbody.innerHTML="";
+  riwayatSnapshot = db.collection("pengajuan").orderBy("timestamp","desc")
+    .onSnapshot(snapshot=>{
+      const tbody = document.getElementById("riwayatData");
+      tbody.innerHTML = "";
+      let totalBelum = 0;
 
-snapshot.forEach(doc=>{
-const d=doc.data();
-let daftarPlat=Array.isArray(d.nomor_plat)?d.nomor_plat:d.nomor_plat?[d.nomor_plat]:[];
+      snapshot.forEach(doc=>{
+        const d = doc.data();
+        let platArray = Array.isArray(d.nomor_plat)?d.nomor_plat:[d.nomor_plat];
+        let statusArray = Array.isArray(d.status_admin_per_plat)?d.status_admin_per_plat:platArray.map(p=>"Belum");
+        let awalBln = d.periode_awal?.substring(0,7) || "";
 
-let awalBln=d.periode_awal?.substring(0,7) || "";
+        platArray.forEach((plat,i)=>{
+          let status = statusArray[i] || "Belum";
+          if(status==="Belum") totalBelum++;
 
-daftarPlat.forEach(plat=>{
-let textRow=`
-<tr>
-<td>${d.jenis_pengajuan||""}</td>
-<td>${d.nama||""}</td>
-<td>${d.departement||""}</td>
-<td>${plat||""}</td>
-<td>${d.jenis_kendaraan||""}</td>
-<td>${d.periode_awal||""} s/d ${d.periode_akhir||""}</td>
-<td>${d.keterangan||""}</td>
-<td>${d.status_admin==="Sudah"?'<span class="status-sudah">Sudah</span>':'<span class="status-baru">Belum</span>'}</td>
-</tr>`;
+          let rowHTML = `
+          <tr>
+            <td>${d.jenis_pengajuan||""}</td>
+            <td>${d.nama||""}</td>
+            <td>${d.departement||""}</td>
+            <td>${plat||""}</td>
+            <td>${d.jenis_kendaraan||""}</td>
+            <td>${d.periode_awal||""} s/d ${d.periode_akhir||""}</td>
+            <td>${d.keterangan||""}</td>
+            <td>${status==="Sudah"?'<span class="status-sudah">Sudah</span>':'<span class="status-baru">Belum</span>'}</td>
+            <td>
+              ${status==="Sudah" ? "" : `<button onclick="tandaiSudah('${doc.id}','${plat}')">Sudah Input</button>`}
+            </td>
+          </tr>`;
 
-// Filter
-let match=true;
-if(cari){
-  match = [d.nama,d.departement,plat,d.status_admin].some(v=>String(v).toLowerCase().includes(cari));
+          // Filter
+          let match = true;
+          if(cari){
+            match = [d.nama,d.departement,plat,status].some(v=>String(v).toLowerCase().includes(cari));
+          }
+          if(bulan && bulan!==awalBln) match=false;
+
+          if(match) tbody.innerHTML += rowHTML;
+        });
+      });
+
+      document.getElementById("totalBelum").textContent = totalBelum;
+  });
 }
-if(bulan && bulan!==awalBln) match=false;
 
-if(match) tbody.innerHTML+=textRow;
-});
-});
-});
+/* TOMBOL SUDAH INPUT PER PLAT */
+function tandaiSudah(docId, plat){
+  db.collection("pengajuan").doc(docId).get().then(doc=>{
+    if(!doc.exists) return;
+    let data = doc.data();
+    let platArray = Array.isArray(data.nomor_plat)?data.nomor_plat:[data.nomor_plat];
+    let statusArray = Array.isArray(data.status_admin_per_plat)?data.status_admin_per_plat:platArray.map(p=>"Belum");
+
+    const index = platArray.indexOf(plat);
+    if(index>=0) statusArray[index] = "Sudah";
+
+    db.collection("pengajuan").doc(docId).update({status_admin_per_plat:statusArray});
+  });
 }
 
 loadRiwayat();
-
-/* EXPORT EXCEL */
-function exportExcel(){
-let dataExport=[];
-document.querySelectorAll("#riwayatData tr").forEach(row=>{
-const cells=row.querySelectorAll("td");
-if(cells.length>0){
-dataExport.push({
-Jenis:cells[0].innerText,
-Nama:cells[1].innerText,
-Departement:cells[2].innerText,
-Plat:cells[3].innerText,
-Kendaraan:cells[4].innerText,
-Periode:cells[5].innerText,
-Keterangan:cells[6].innerText,
-Status:cells[7].innerText
-});
-}
-});
-if(dataExport.length===0){alert("Tidak ada data untuk di export");return;}
-const worksheet=XLSX.utils.json_to_sheet(dataExport);
-const workbook=XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(workbook,worksheet,"Riwayat");
-XLSX.writeFile(workbook,"Riwayat_Pengajuan.xlsx");
-}
 </script>
 
 </body>

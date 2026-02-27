@@ -90,9 +90,10 @@ th{background:#4e54c8;color:#fff}
 
 <div class="tab" id="ganti" style="display:none">
 <form id="formGantiPassword">
-<input type="password" id="passLama" placeholder="Password Lama">
-<input type="password" id="passBaru" placeholder="Password Baru">
+<input type="password" id="oldPassword" placeholder="Password Lama" required>
+<input type="password" id="newPassword" placeholder="Password Baru" required>
 <button type="submit">Ganti Password</button>
+<p id="passMsg" style="font-size:13px;color:red;"></p>
 </form>
 </div>
 
@@ -116,16 +117,20 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 /* --- PROTEKSI LOGIN --- */
-if(!sessionStorage.getItem('managementLogin') || sessionStorage.getItem('managementRole') !== 'management'){
+const loginUser = sessionStorage.getItem('managementLogin');
+const loginRole = sessionStorage.getItem('managementRole');
+if(!loginUser || loginRole!=='management'){
   alert('Silahkan login terlebih dahulu');
-  window.location.href = 'login.html';
+  window.location.href='login.html';
 }
 
+/* TIMEOUT SESSION 15 MENIT */
+let idleTime=0;
+setInterval(()=>{idleTime++; if(idleTime>15){ logout(); }},60000);
+document.onmousemove=document.onkeypress=()=>{idleTime=0;}
+
 /* LOGOUT */
-function logout(){
-  sessionStorage.clear();
-  window.location.href = 'login.html';
-}
+function logout(){ sessionStorage.clear(); window.location.href='login.html'; }
 
 /* TAB */
 document.querySelectorAll(".tab-btn").forEach(btn=>{
@@ -216,7 +221,6 @@ tbody.innerHTML+=`
 </tr>`;
 }
 
-// Hitung total belum
 if(statusPlat[index]==="Belum") totalBelum++;
 });
 });
@@ -250,24 +254,27 @@ XLSX.utils.book_append_sheet(workbook,worksheet,"Riwayat");
 XLSX.writeFile(workbook,"Riwayat_Pengajuan.xlsx");
 }
 
-/* GANTI PASSWORD */
-document.getElementById("formGantiPassword").addEventListener("submit",async function(e){
+/* --- GANTI PASSWORD --- */
+document.getElementById('formGantiPassword').addEventListener('submit', async function(e){
 e.preventDefault();
-const lama = document.getElementById("passLama").value.trim();
-const baru = document.getElementById("passBaru").value.trim();
-if(!lama || !baru){ alert("Isi semua field"); return; }
+const oldPass=document.getElementById('oldPassword').value;
+const newPass=document.getElementById('newPassword').value;
+const msg=document.getElementById('passMsg');
 
-const username = sessionStorage.getItem("managementLogin");
-const snapshot = await db.collection("users").where("username","==",username).get();
-if(snapshot.empty){ alert("User tidak ditemukan"); return; }
+if(!oldPass || !newPass){ msg.textContent="Isi semua field"; return; }
 
-snapshot.forEach(doc=>{
-  const data = doc.data();
-  if(String(data.password) !== lama){ alert("Password lama salah"); return; }
-  db.collection("users").doc(doc.id).update({password:baru});
-  alert("Password berhasil diubah");
-  document.getElementById("passLama").value=""; document.getElementById("passBaru").value="";
-});
+const username = sessionStorage.getItem('managementLogin');
+
+const userRef = db.collection('users').doc(username);
+const userDoc = await userRef.get();
+if(!userDoc.exists){ msg.textContent="User tidak ditemukan"; return; }
+
+const data = userDoc.data();
+if(data.password !== oldPass){ msg.textContent="Password lama salah"; return; }
+
+await userRef.update({password:newPass});
+msg.style.color="green"; msg.textContent="Password berhasil diubah";
+document.getElementById('formGantiPassword').reset();
 });
 </script>
 

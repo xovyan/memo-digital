@@ -44,7 +44,6 @@ document.getElementById('btnLogin').onclick = async ()=>{
   if(!usernameInput || !passwordInput){ msg.textContent="Isi semua field"; return; }
 
   try{
-    // Cari user berdasarkan field username
     const querySnapshot = await db.collection('users')
       .where('username','==',usernameInput)
       .limit(1)
@@ -67,7 +66,6 @@ document.getElementById('btnLogin').onclick = async ()=>{
     sessionStorage.setItem('managementLogin', data.username);
     sessionStorage.setItem('managementRole', data.role);
 
-    // arahkan ke dashboard
     window.location.href = "dashboard_management.html";
 
   }catch(err){

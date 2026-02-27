@@ -53,11 +53,19 @@ document.getElementById("loginBtn").addEventListener("click", async ()=>{
     if(querySnap.empty) return showPopup("Username tidak ditemukan");
 
     const data = querySnap.docs[0].data();
-    if(passwordInput !== data.password) return showPopup("Password salah");
-    if(data.role !== "management") return showPopup("Hanya management yang bisa login");
 
-    localStorage.setItem("userSession", JSON.stringify({username:data.username, role:data.role}));
-    window.location.href="dashboard_management.html";
+    if(passwordInput !== data.password) return showPopup("Password salah");
+
+    // Simpan session lengkap termasuk role, username, dan password
+    localStorage.setItem("userSession", JSON.stringify({
+      username: data.username,
+      role: data.role,
+      password: data.password
+    }));
+
+    // Hanya arahkan ke dashboard management kalau role management
+    if(data.role === "management") window.location.href="dashboard_management.html";
+    else showPopup("Hanya management yang bisa login");
 
   }catch(err){
     console.error(err);

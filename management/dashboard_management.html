@@ -19,7 +19,6 @@ width:100%;margin-bottom:10px;padding:10px;border-radius:8px;border:1px solid #c
 form button{background:#4e54c8;color:#fff;font-weight:bold;border:none;cursor:pointer}
 .nopol-group{display:flex;gap:5px;margin-bottom:5px}
 .nopol-group input{flex:1}
-.nopol-group button{width:35px;background:red;color:#fff;border:none;border-radius:6px}
 .table-wrapper{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;margin-top:15px;background:#fff;font-size:13px}
 th,td{border:1px solid #ccc;padding:6px;text-align:center}
@@ -78,15 +77,14 @@ box-shadow:0 4px 10px rgba(0,0,0,0.2);display:none;z-index:999;
 <div class="tab" id="riwayat" style="display:none">
 
 <div class="filter-area">
-<select id="filterJenis">
-<option value="">-- Semua Jenis --</option>
-<option value="Free Parkir">Free Parkir</option>
-<option value="Compliment">Compliment</option>
-<option value="Ubah Plat">Ubah Plat</option>
+<input type="text" id="filterNama" placeholder="Cari Nama">
+<input type="text" id="filterDept" placeholder="Cari Departement">
+<input type="text" id="filterPlat" placeholder="Cari Plat">
+<select id="filterStatus">
+<option value="">-- Semua Status --</option>
+<option value="Belum">Belum</option>
+<option value="Sudah">Sudah</option>
 </select>
-
-<input type="month" id="filterBulan">
-
 <button id="btnFilter">Filter</button>
 <button id="btnExport">Export Excel</button>
 </div>
@@ -199,16 +197,27 @@ function renderTable(data){
 const tbody=document.getElementById("riwayatData");
 tbody.innerHTML="";
 
-const filterJenis=document.getElementById("filterJenis").value;
-const filterBulan=document.getElementById("filterBulan").value;
+const filterNama=document.getElementById("filterNama").value.toLowerCase();
+const filterDept=document.getElementById("filterDept").value.toLowerCase();
+const filterPlat=document.getElementById("filterPlat").value.toLowerCase();
+const filterStatus=document.getElementById("filterStatus").value;
 
 data.forEach(doc=>{
 const d=doc.data();
-if(filterJenis && d.jenis_pengajuan!==filterJenis) return;
-if(filterBulan && d.periode_awal.substring(0,7)!==filterBulan) return;
-
 const daftarPlat=Array.isArray(d.nomor_plat)?d.nomor_plat:[d.nomor_plat];
 
+// filter
+if(filterNama && !d.nama.toLowerCase().includes(filterNama)) return;
+if(filterDept && !d.departement.toLowerCase().includes(filterDept)) return;
+if(filterStatus && d.status_admin!==filterStatus) return;
+
+let platMatch=false;
+daftarPlat.forEach(p=>{
+if(!filterPlat || p.toLowerCase().includes(filterPlat)) platMatch=true;
+});
+if(!platMatch) return;
+
+// render per plat
 daftarPlat.forEach(plat=>{
 tbody.innerHTML+=`
 <tr>
@@ -230,7 +239,6 @@ allData=snapshot.docs;
 renderTable(allData);
 });
 
-/* FILTER */
 document.getElementById("btnFilter").onclick=()=>renderTable(allData);
 
 /* EXPORT EXCEL */

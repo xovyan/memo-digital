@@ -5,33 +5,39 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard Management</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
-body{background:#f4f6f9}
-header{background:#4e54c8;color:#fff;padding:15px;text-align:center;font-size:20px}
-nav{display:flex;background:#fff}
-nav button{flex:1;padding:12px;border:none;background:none;font-weight:bold;color:#4e54c8;cursor:pointer}
-nav button.active{border-bottom:3px solid #4e54c8}
-section{padding:15px}
-form input,form select,form textarea,form button{
-  width:100%;margin-bottom:10px;padding:10px;border-radius:8px;border:1px solid #ccc;font-size:14px
-}
-form button{background:#4e54c8;color:#fff;font-weight:bold;border:none;cursor:pointer}
-.nopol-group{display:flex;gap:5px;margin-bottom:5px;align-items:center}
-.nopol-group input{flex:1;min-width:0}
-.nopol-group button{background:red;color:#fff;border:none;border-radius:6px;width:30px;height:30px;cursor:pointer;font-size:16px;line-height:1;padding:0}
-#addNopol{background:#27ae60;padding:6px 12px;font-size:14px;border-radius:6px;margin-top:5px;display:inline-block}
-table{width:100%;border-collapse:collapse;margin-top:15px;background:#fff;font-size:13px}
-th,td{border:1px solid #ccc;padding:6px;text-align:center}
-th{background:#4e54c8;color:#fff}
-.status-baru{color:red;font-weight:bold}
-.status-sudah{color:green;font-weight:bold}
-.popup{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#16a34a;color:#fff;padding:12px 20px;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,0.2);display:none;z-index:999}
-.filter-area{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
-.filter-area input, .filter-area select, .filter-area button{padding:6px 10px;font-size:13px;border-radius:6px;border:1px solid #ccc}
-.total-belum{margin-top:10px;font-weight:bold;font-size:14px}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial;}
+body{background:#f4f6f9;}
+header{background:#4e54c8;color:#fff;padding:15px;text-align:center;font-size:20px;}
+nav{display:flex;background:#fff;}
+nav button{flex:1;padding:12px;border:none;background:none;font-weight:bold;color:#4e54c8;cursor:pointer;}
+nav button.active{border-bottom:3px solid #4e54c8;}
+section{padding:15px;}
+form input,form select,form textarea,form button{width:100%;margin-bottom:10px;padding:10px;border-radius:8px;border:1px solid #ccc;font-size:14px;}
+form button{background:#4e54c8;color:#fff;font-weight:bold;border:none;cursor:pointer;}
+.nopol-group{display:flex;gap:5px;margin-bottom:5px;align-items:center;}
+.nopol-group input{flex:1;min-width:0;}
+.nopol-group button{background:red;color:#fff;border:none;border-radius:6px;width:30px;height:30px;cursor:pointer;font-size:16px;line-height:1;padding:0;}
+#addNopol{background:#27ae60;padding:6px 12px;font-size:14px;border-radius:6px;margin-top:5px;display:inline-block;}
+table{width:100%;border-collapse:collapse;margin-top:15px;background:#fff;font-size:13px;}
+th,td{border:1px solid #ccc;padding:6px;text-align:center;}
+th{background:#4e54c8;color:#fff;}
+.status-baru{color:red;font-weight:bold;}
+.status-sudah{color:green;font-weight:bold;}
+.popup{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#16a34a;color:#fff;padding:12px 20px;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,0.2);display:none;z-index:999;}
+.filter-area{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+.filter-area input, .filter-area select, .filter-area button{padding:6px 10px;font-size:13px;border-radius:6px;border:1px solid #ccc;}
+.total-belum{margin-top:10px;font-weight:bold;font-size:14px;}
 </style>
 </head>
 <body>
+
+<script>
+// ✅ Proteksi halaman: harus login dulu
+if(!localStorage.getItem('managementUser')){
+    alert('Silakan login terlebih dahulu');
+    window.location.href = 'login_management.html';
+}
+</script>
 
 <header>Dashboard Management</header>
 <div class="popup" id="popup">Data berhasil dikirim ✅</div>
@@ -44,6 +50,7 @@ th{background:#4e54c8;color:#fff}
 </nav>
 
 <section>
+
 <!-- PENGAJUAN -->
 <div class="tab" id="pengajuan">
 <form id="formPengajuan" autocomplete="off">
@@ -53,14 +60,18 @@ th{background:#4e54c8;color:#fff}
 <option value="Compliment">Compliment</option>
 <option value="Ubah Plat">Ubah Plat</option>
 </select>
+
 <input type="text" name="nama" placeholder="Nama" required>
 <input type="text" name="departement" placeholder="Departement" required>
+
 <div id="nopolContainer"></div>
 <button type="button" id="addNopol">+ Tambah Plat</button>
+
 <input type="text" name="jenis_kendaraan" placeholder="Jenis Kendaraan">
 <input type="date" name="periode_awal" required>
 <input type="date" name="periode_akhir" required>
 <textarea name="keterangan" placeholder="Keterangan"></textarea>
+
 <button type="submit" id="btnKirim">Kirim</button>
 </form>
 </div>
@@ -73,7 +84,9 @@ th{background:#4e54c8;color:#fff}
 <button onclick="loadRiwayat()">Filter</button>
 <button onclick="exportExcel()">Export Excel</button>
 </div>
+
 <div class="total-belum">Total Belum Input: <span id="totalBelum">0</span></div>
+
 <table>
 <thead>
 <tr>
@@ -94,8 +107,8 @@ th{background:#4e54c8;color:#fff}
 <!-- GANTI PASSWORD -->
 <div class="tab" id="ganti" style="display:none">
 <form id="formGanti">
-<input type="password" placeholder="Password Lama" id="passLama">
-<input type="password" placeholder="Password Baru" id="passBaru">
+<input type="password" id="passLama" placeholder="Password Lama" required>
+<input type="password" id="passBaru" placeholder="Password Baru" required>
 <button type="submit">Ganti Password</button>
 </form>
 </div>
@@ -103,6 +116,7 @@ th{background:#4e54c8;color:#fff}
 <div class="tab" id="logout" style="display:none">
 <button id="btnLogout">Keluar</button>
 </div>
+
 </section>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -110,7 +124,6 @@ th{background:#4e54c8;color:#fff}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <script>
-// FIREBASE INIT
 const firebaseConfig = {
   apiKey: "AIzaSyCaPM6CNaiK-VZYR0-dkrrYMANiWi8pUGw",
   authDomain: "memodigital-57c0c.firebaseapp.com",
@@ -119,171 +132,165 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// SIMPLE LOGIN CHECK
-if(!localStorage.getItem('managementUser')){
-  alert('Silakan login terlebih dahulu');
-  window.location.href = 'login_management.html';
-}
-
-// TAB
+/* TAB */
 document.querySelectorAll(".tab-btn").forEach(btn=>{
-  btn.onclick=()=>{
-    document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
-    btn.classList.add("active");
-    document.querySelectorAll(".tab").forEach(t=>t.style.display="none");
-    document.getElementById(btn.dataset.tab).style.display="block";
-  };
+btn.onclick=()=>{
+document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+btn.classList.add("active");
+document.querySelectorAll(".tab").forEach(t=>t.style.display="none");
+document.getElementById(btn.dataset.tab).style.display="block";
+};
 });
 
-// NOPOL
+/* Logout */
+document.getElementById("btnLogout").onclick=()=>{
+localStorage.removeItem("managementUser");
+window.location.href = "login_management.html";
+};
+
+/* NOPOL */
 const nopolContainer=document.getElementById("nopolContainer");
 function createNopol(){
-  const div=document.createElement("div");
-  div.className="nopol-group";
-  div.innerHTML=`<input type="text" name="nomor_plat[]" required>
-  <button type="button">×</button>`;
-  div.querySelector("button").onclick=()=>{
-    if(document.querySelectorAll('[name="nomor_plat[]"]').length>1) div.remove();
-  };
-  return div;
+const div=document.createElement("div");
+div.className="nopol-group";
+div.innerHTML=`<input type="text" name="nomor_plat[]" required>
+<button type="button">×</button>`;
+div.querySelector("button").onclick=()=>{
+if(document.querySelectorAll('[name="nomor_plat[]"]').length>1)div.remove();
+};
+return div;
 }
 function resetNopol(){
-  nopolContainer.innerHTML="";
-  nopolContainer.appendChild(createNopol());
+nopolContainer.innerHTML="";
+nopolContainer.appendChild(createNopol());
 }
 resetNopol();
 document.getElementById("addNopol").onclick=()=>nopolContainer.appendChild(createNopol());
 
-// SUBMIT PENGAJUAN
+/* SUBMIT PENGAJUAN */
 document.getElementById("formPengajuan").addEventListener("submit",async function(e){
-  e.preventDefault();
-  const btn=document.getElementById("btnKirim");
-  btn.disabled=true;
+e.preventDefault();
+const btn=document.getElementById("btnKirim");
+btn.disabled=true;
 
-  const formData=new FormData(this);
-  let nomor_plat=[];
-  document.querySelectorAll('[name="nomor_plat[]"]').forEach(i=>{
-    if(i.value.trim()!=="") nomor_plat.push(i.value.trim());
-  });
-  if(nomor_plat.length===0){btn.disabled=false; return;}
+const formData=new FormData(this);
+let nomor_plat=[];
+document.querySelectorAll('[name="nomor_plat[]"]').forEach(i=>{
+if(i.value.trim()!=="")nomor_plat.push(i.value.trim());
+});
+if(nomor_plat.length===0){btn.disabled=false;return;}
 
-  await db.collection("pengajuan").add({
-    ...Object.fromEntries(formData.entries()),
-    nomor_plat: nomor_plat,
-    status_admin_per_plat: nomor_plat.map(()=> "Belum"),
-    timestamp:firebase.firestore.FieldValue.serverTimestamp()
-  });
-
-  this.reset();
-  resetNopol();
-  window.scrollTo({top:0,behavior:"smooth"});
-  const popup=document.getElementById("popup");
-  popup.style.display="block";
-  setTimeout(()=>popup.style.display="none",2000);
-  btn.disabled=false;
+await db.collection("pengajuan").add({
+...Object.fromEntries(formData.entries()),
+nomor_plat: nomor_plat,
+status_admin_per_plat: nomor_plat.map(()=> "Belum"),
+timestamp:firebase.firestore.FieldValue.serverTimestamp()
 });
 
-// RIWAYAT
+this.reset();
+resetNopol();
+window.scrollTo({top:0,behavior:"smooth"});
+document.getElementById("popup").style.display="block";
+setTimeout(()=>document.getElementById("popup").style.display="none",2000);
+btn.disabled=false;
+});
+
+/* RIWAYAT */
 let riwayatSnapshot=null;
 function loadRiwayat(){
-  const cari=document.getElementById("cariFilter").value.toLowerCase();
-  const bulan=document.getElementById("bulanFilter").value;
+const cari=document.getElementById("cariFilter").value.toLowerCase();
+const bulan=document.getElementById("bulanFilter").value;
 
-  if(riwayatSnapshot) riwayatSnapshot();
+if(riwayatSnapshot) riwayatSnapshot(); // stop snapshot lama
 
-  riwayatSnapshot=db.collection("pengajuan").orderBy("timestamp","desc")
-  .onSnapshot(snapshot=>{
-    const tbody=document.getElementById("riwayatData");
-    tbody.innerHTML="";
-    let totalBelum=0;
+riwayatSnapshot=db.collection("pengajuan").orderBy("timestamp","desc")
+.onSnapshot(snapshot=>{
+const tbody=document.getElementById("riwayatData");
+tbody.innerHTML="";
+let totalBelum=0;
 
-    snapshot.forEach(doc=>{
-      const d=doc.data();
-      let daftarPlat=Array.isArray(d.nomor_plat)?d.nomor_plat:d.nomor_plat?[d.nomor_plat]:[];
-      let statusPlat=Array.isArray(d.status_admin_per_plat)?d.status_admin_per_plat:daftarPlat.map(()=> "Belum");
-      let awalBln=d.periode_awal?.substring(0,7) || "";
+snapshot.forEach(doc=>{
+const d=doc.data();
+let daftarPlat=Array.isArray(d.nomor_plat)?d.nomor_plat:d.nomor_plat?[d.nomor_plat]:[];
+let statusPlat=Array.isArray(d.status_admin_per_plat)?d.status_admin_per_plat:daftarPlat.map(()=> "Belum");
 
-      daftarPlat.forEach((plat,index)=>{
-        let match=true;
-        if(cari){
-          match=[d.nama,d.departement,plat,statusPlat[index]].some(v=>String(v).toLowerCase().includes(cari));
-        }
-        if(bulan && bulan!==awalBln) match=false;
+let awalBln=d.periode_awal?.substring(0,7) || "";
 
-        if(match){
-          tbody.innerHTML+=`
-          <tr>
-          <td>${d.jenis_pengajuan||""}</td>
-          <td>${d.nama||""}</td>
-          <td>${d.departement||""}</td>
-          <td>${plat||""}</td>
-          <td>${d.jenis_kendaraan||""}</td>
-          <td>${d.periode_awal||""} s/d ${d.periode_akhir||""}</td>
-          <td>${d.keterangan||""}</td>
-          <td>${statusPlat[index]==="Sudah"?'<span class="status-sudah">Sudah</span>':'<span class="status-baru">Belum</span>'}</td>
-          </tr>`;
-        }
-        if(statusPlat[index]==="Belum") totalBelum++;
-      });
-    });
-    document.getElementById("totalBelum").textContent=totalBelum;
-  });
+daftarPlat.forEach((plat,index)=>{
+let match=true;
+if(cari){
+  match = [d.nama,d.departement,plat,statusPlat[index]].some(v=>String(v).toLowerCase().includes(cari));
 }
+if(bulan && bulan!==awalBln) match=false;
+
+if(match){
+tbody.innerHTML+=`
+<tr>
+<td>${d.jenis_pengajuan||""}</td>
+<td>${d.nama||""}</td>
+<td>${d.departement||""}</td>
+<td>${plat||""}</td>
+<td>${d.jenis_kendaraan||""}</td>
+<td>${d.periode_awal||""} s/d ${d.periode_akhir||""}</td>
+<td>${d.keterangan||""}</td>
+<td>${statusPlat[index]==="Sudah"?'<span class="status-sudah">Sudah</span>':'<span class="status-baru">Belum</span>'}</td>
+</tr>`;
+}
+
+// Hitung total belum
+if(statusPlat[index]==="Belum") totalBelum++;
+});
+});
+document.getElementById("totalBelum").textContent=totalBelum;
+});
+}
+
 loadRiwayat();
 
-// EXPORT EXCEL
+/* EXPORT EXCEL */
 function exportExcel(){
-  let dataExport=[];
-  document.querySelectorAll("#riwayatData tr").forEach(row=>{
-    const cells=row.querySelectorAll("td");
-    if(cells.length>0){
-      dataExport.push({
-        Jenis:cells[0].innerText,
-        Nama:cells[1].innerText,
-        Departement:cells[2].innerText,
-        Plat:cells[3].innerText,
-        Kendaraan:cells[4].innerText,
-        Periode:cells[5].innerText,
-        Keterangan:cells[6].innerText,
-        Status:cells[7].innerText
-      });
-    }
-  });
-  if(dataExport.length===0){alert("Tidak ada data untuk di export"); return;}
-  const worksheet=XLSX.utils.json_to_sheet(dataExport);
-  const workbook=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook,worksheet,"Riwayat");
-  XLSX.writeFile(workbook,"Riwayat_Pengajuan.xlsx");
+let dataExport=[];
+document.querySelectorAll("#riwayatData tr").forEach(row=>{
+const cells=row.querySelectorAll("td");
+if(cells.length>0){
+dataExport.push({
+Jenis:cells[0].innerText,
+Nama:cells[1].innerText,
+Departement:cells[2].innerText,
+Plat:cells[3].innerText,
+Kendaraan:cells[4].innerText,
+Periode:cells[5].innerText,
+Keterangan:cells[6].innerText,
+Status:cells[7].innerText
+});
+}
+});
+if(dataExport.length===0){alert("Tidak ada data untuk di export");return;}
+const worksheet=XLSX.utils.json_to_sheet(dataExport);
+const workbook=XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(workbook,worksheet,"Riwayat");
+XLSX.writeFile(workbook,"Riwayat_Pengajuan.xlsx");
 }
 
-// GANTI PASSWORD SEDERHANA
-document.getElementById("formGanti").addEventListener("submit",async function(e){
-  e.preventDefault();
-  const lama=document.getElementById("passLama").value;
-  const baru=document.getElementById("passBaru").value;
+/* GANTI PASSWORD */
+document.getElementById("formGanti").addEventListener("submit", async function(e){
+    e.preventDefault();
+    const username = localStorage.getItem("managementUser");
+    const passLama = document.getElementById("passLama").value.trim();
+    const passBaru = document.getElementById("passBaru").value.trim();
 
-  // Ambil user dari localStorage
-  const user=localStorage.getItem('managementUser');
-  if(!user){ alert("Login tidak valid"); return; }
+    if(!username || !passLama || !passBaru){ alert("Lengkapi semua field"); return; }
 
-  // Ambil password lama di Firestore
-  const docRef=db.collection('users').doc(user);
-  const docSnap=await docRef.get();
-  if(!docSnap.exists){ alert("Data user tidak ditemukan"); return; }
+    const doc = await db.collection("users").doc(username).get();
+    if(!doc.exists || doc.data().password !== passLama){
+        alert("Password lama salah");
+        return;
+    }
 
-  if(docSnap.data().password !== lama){ alert("Password lama salah"); return; }
-
-  await docRef.update({password:baru});
-  alert("Password berhasil diganti");
-  this.reset();
+    await db.collection("users").doc(username).update({password: passBaru});
+    alert("Password berhasil diganti");
+    this.reset();
 });
-
-// LOGOUT
-document.getElementById("btnLogout").onclick=()=>{
-  localStorage.removeItem('managementUser');
-  window.location.href='login_management.html';
-};
 </script>
-
 </body>
 </html>

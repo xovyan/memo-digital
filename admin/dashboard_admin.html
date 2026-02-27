@@ -7,100 +7,178 @@
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif;}
-body{background:#f1f4f9;}
+body{background:#f1f4f9;min-height:100vh;}
 
 h2{
-    text-align:center;
-    padding:20px 0;
-    background:#2c3e50;
-    color:white;
+    text-align:center;
+    padding:20px 0;
+    background:#2c3e50;
+    color:white;
+    letter-spacing:1px;
 }
 
 .container{
-    width:95%;
-    max-width:1200px;
-    margin:20px auto;
-    background:white;
-    padding:20px;
-    border-radius:12px;
-    box-shadow:0 4px 15px rgba(0,0,0,0.05);
+    width:95%;
+    max-width:1200px;
+    margin:20px auto;
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.05);
 }
 
 .summary-box{
-    background:#eafaf1;
-    border:2px solid #2ecc71;
-    padding:15px;
-    border-radius:10px;
-    margin-bottom:20px;
-    text-align:center;
-    font-size:18px;
-    font-weight:bold;
-    color:#27ae60;
+    background:#eafaf1;
+    border:2px solid #2ecc71;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:20px;
+    text-align:center;
+    font-size:18px;
+    font-weight:bold;
+    color:#27ae60;
 }
 
-.table-wrapper{overflow-x:auto;}
+.filter-area{
+    display:flex;
+    flex-wrap:wrap;
+    gap:15px;
+    align-items:flex-end;
+    margin-bottom:20px;
+}
+
+.filter-area label{
+    font-weight:600;
+    font-size:14px;
+}
+
+.filter-area input,
+.filter-area button{
+    padding:8px 12px;
+    border-radius:8px;
+    border:1px solid #ddd;
+    font-size:14px;
+}
+
+.filter-area button{
+    background:#2c3e50;
+    color:white;
+    border:none;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.filter-area button:hover{
+    background:#1a252f;
+}
+
+.table-wrapper{
+    overflow-x:auto;
+}
 
 table{
-    width:100%;
-    border-collapse:collapse;
-    font-size:13px;
+    width:100%;
+    border-collapse:collapse;
+    font-size:13px;
+    min-width:1000px;
 }
 
 th{
-    background:#34495e;
-    color:white;
-    padding:12px;
-    text-align:center;
+    background:#34495e;
+    color:white;
+    padding:12px;
+    text-align:center;
+    position:sticky;
+    top:0;
 }
 
 td{
-    padding:10px;
-    text-align:center;
-    border-bottom:1px solid #eee;
+    padding:10px;
+    text-align:center;
+    vertical-align:middle;
+    border-bottom:1px solid #eee;
 }
 
-.status-sudah{color:green;font-weight:bold;}
-.status-belum{color:orange;font-weight:bold;}
+tr:hover{background:#f9fbff;}
+
+.status-aktif{color:green;font-weight:bold;}
+.status-selesai{color:gray;font-weight:bold;}
 
 textarea{
-    width:150px;
-    height:55px;
-    border-radius:6px;
+    width:180px;
+    height:65px;
+    resize:vertical;
+    padding:6px;
+    border-radius:6px;
+    border:1px solid #ccc;
+    font-size:12px;
 }
 
 .btn{
-    padding:6px 10px;
-    border:none;
-    border-radius:6px;
-    cursor:pointer;
-    margin:2px;
+    padding:6px 12px;
+    border-radius:6px;
+    border:none;
+    cursor:pointer;
+    font-size:12px;
+    transition:0.2s;
 }
 
-.btn-hapus{background:#e74c3c;color:white;}
-.btn-sudah{background:#27ae60;color:white;}
+.btn-hapus{
+    background:#e74c3c;
+    color:white;
+}
+
+.btn-hapus:hover{background:#c0392b;}
+
+@media(max-width:768px){
+    .filter-area{flex-direction:column;align-items:flex-start;}
+    textarea{width:140px;height:55px;}
+    table{font-size:11px;}
+}
 </style>
 </head>
 
 <body>
 
-<h2>DASHBOARD ADMIN</h2>
+<h2>KELOLA ADMIN</h2>
 
 <div class="container">
 
 <div class="summary-box">
-TOTAL PARKIR AKTIF :
-<span id="total-aktif">0</span>
+    TOTAL PARKIR AKTIF SAAT INI :
+    <span id="total-aktif">0</span>
+</div>
+
+<div class="filter-area">
+    <div>
+        <label>Cari Nama / Plat</label><br>
+        <input type="text" id="cari" placeholder="Cari...">
+    </div>
+
+    <div>
+        <label>Periode Bulan</label><br>
+        <input type="month" id="bulan">
+    </div>
+
+    <div>
+        <button onclick="loadData()">Filter</button>
+        <button onclick="exportExcel()">Export Excel</button>
+    </div>
 </div>
 
 <div class="table-wrapper">
 <table>
 <thead>
 <tr>
+<th>Jenis</th>
 <th>Nama</th>
+<th>Departement</th>
 <th>Plat</th>
+<th>Kendaraan</th>
 <th>Periode</th>
-<th>Status Admin</th>
-<th>Catatan</th>
+<th>Keterangan</th>
+<th>Status</th>
+<th>Catatan Admin</th>
 <th>Aksi</th>
 </tr>
 </thead>
@@ -110,75 +188,156 @@ TOTAL PARKIR AKTIF :
 
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
-firebase.initializeApp({
-  apiKey: "AIzaSyCaPM6CNaiK-VZYR0-dkrrYMANiWi8pUGw",
-  authDomain: "memodigital-57c0c.firebaseapp.com",
-  projectId: "memodigital-57c0c",
-});
+const firebaseConfig = {
+  apiKey: "AIzaSyCaPM6CNaiK-VZYR0-dkrrYMANiWi8pUGw",
+  authDomain: "memodigital-57c0c.firebaseapp.com",
+  projectId: "memodigital-57c0c",
+  storageBucket: "memodigital-57c0c.firebasestorage.app",
+  messagingSenderId: "612241421208",
+  appId: "1:612241421208:web:119b13353da40aa51871ed",
+};
+
+firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const tableBody = document.getElementById('data-table');
+const totalAktifEl = document.getElementById('total-aktif');
 
-const tableBody=document.getElementById('data-table');
-const totalAktifEl=document.getElementById('total-aktif');
+function renderRow(docData, docId){
+    const tr = document.createElement('tr');
+    const today = new Date();
+    const awal = new Date(docData.periode_awal);
+    const akhir = new Date(docData.periode_akhir);
+    let statusText = "-";
 
-db.collection('pengajuan')
-.orderBy('timestamp','desc')
-.onSnapshot(snapshot=>{
+    if(today >= awal && today <= akhir)
+        statusText = "<span class='status-aktif'>Aktif</span>";
+    else if(today > akhir)
+        statusText = "<span class='status-selesai'>Selesai</span>";
 
-    tableBody.innerHTML='';
-    let totalAktif=0;
-    const today=new Date();
-
-    snapshot.forEach(doc=>{
-        const d=doc.data();
-        const daftarPlat=Array.isArray(d.nomor_plat)?d.nomor_plat:[d.nomor_plat];
-
-        daftarPlat.forEach(plat=>{
-            const awal=new Date(d.periode_awal);
-            const akhir=new Date(d.periode_akhir);
-            if(today>=awal && today<=akhir) totalAktif++;
-
-            const statusAdmin=d.status_admin==="Sudah"
-                ? "<span class='status-sudah'>Sudah</span>"
-                : "<span class='status-belum'>Belum</span>";
-
-            const tr=document.createElement('tr');
-            tr.innerHTML=`
-                <td>${d.nama}</td>
-                <td>${plat}</td>
-                <td>${d.periode_awal} s/d ${d.periode_akhir}</td>
-                <td>${statusAdmin}</td>
-                <td><textarea data-id="${doc.id}">${d.catatan_admin||''}</textarea></td>
-                <td>
-                    <button class="btn btn-sudah" onclick="tandaiSudah('${doc.id}')">
-                        Sudah Diinput
-                    </button>
-                    <button class="btn btn-hapus" onclick="hapusData('${doc.id}')">
-                        Hapus
-                    </button>
-                </td>
-            `;
-            tableBody.appendChild(tr);
-        });
-    });
-
-    totalAktifEl.textContent=totalAktif;
-});
-
-window.tandaiSudah=function(id){
-    db.collection('pengajuan').doc(id).update({
-        status_admin:"Sudah"
-    });
+    tr.innerHTML = `
+        <td>${docData.jenis_pengajuan}</td>
+        <td>${docData.nama}</td>
+        <td>${docData.departement}</td>
+        <td>${docData.nomor_plat}</td>
+        <td>${docData.jenis_kendaraan||''}</td>
+        <td>${docData.periode_awal} s/d ${docData.periode_akhir}</td>
+        <td>${docData.keterangan||''}</td>
+        <td>${statusText}</td>
+        <td><textarea class="catatan-admin" data-id="${docId}">${docData.catatan_admin||''}</textarea></td>
+        <td><button class="btn btn-hapus" data-id="${docId}">Hapus</button></td>
+    `;
+    tableBody.appendChild(tr);
 }
 
-window.hapusData=function(id){
-    if(confirm("Yakin hapus data?")){
-        db.collection('pengajuan').doc(id).delete();
-    }
+let unsubscribe=null;
+
+function loadData(){
+    const cari=document.getElementById('cari').value.toLowerCase();
+    const bulan=document.getElementById('bulan').value;
+
+    if(unsubscribe) unsubscribe();
+
+    let q=db.collection('pengajuan').orderBy('timestamp','desc');
+
+    unsubscribe=q.onSnapshot(snapshot=>{
+        tableBody.innerHTML='';
+        let totalAktif=0;
+        const today=new Date();
+
+        snapshot.forEach(doc=>{
+            const d=doc.data();
+            let match=true;
+
+            if(cari){
+                match=Object.values(d).some(v=>String(v).toLowerCase().includes(cari));
+            }
+
+            if(bulan){
+                const bln=d.periode_awal.substring(0,7);
+                if(bln!==bulan) match=false;
+            }
+
+            if(match){
+                const awal=new Date(d.periode_awal);
+                const akhir=new Date(d.periode_akhir);
+                if(today>=awal && today<=akhir) totalAktif++;
+                renderRow(d,doc.id);
+            }
+        });
+
+        totalAktifEl.textContent=totalAktif;
+
+        aktifkanAutoSave();
+        aktifkanHapus();
+    });
 }
+
+function aktifkanAutoSave(){
+    document.querySelectorAll('.catatan-admin').forEach(textarea=>{
+        let timeout=null;
+        textarea.onkeyup=()=>{
+            clearTimeout(timeout);
+            timeout=setTimeout(()=>{
+                db.collection('pengajuan')
+                  .doc(textarea.dataset.id)
+                  .update({
+                    catatan_admin: textarea.value,
+                    status_admin:'sudah di input'
+                  });
+            },800);
+        };
+    });
+}
+
+function aktifkanHapus(){
+    document.querySelectorAll('.btn-hapus').forEach(btn=>{
+        btn.onclick=()=>{
+            if(confirm("Yakin ingin menghapus data ini?")){
+                db.collection('pengajuan').doc(btn.dataset.id).delete();
+            }
+        };
+    });
+}
+
+function exportExcel(){
+    let dataExport=[];
+    const rows=document.querySelectorAll("#data-table tr");
+
+    rows.forEach(row=>{
+        const cells=row.querySelectorAll("td");
+        if(cells.length>0){
+            dataExport.push({
+                Jenis:cells[0].innerText,
+                Nama:cells[1].innerText,
+                Departement:cells[2].innerText,
+                Plat:cells[3].innerText,
+                Kendaraan:cells[4].innerText,
+                Periode:cells[5].innerText,
+                Keterangan:cells[6].innerText,
+                Status:cells[7].innerText,
+                Catatan_Admin:row.querySelector("textarea")?.value||""
+            });
+        }
+    });
+
+    if(dataExport.length===0){
+        alert("Tidak ada data untuk di export");
+        return;
+    }
+
+    const worksheet=XLSX.utils.json_to_sheet(dataExport);
+    const workbook=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook,worksheet,"Data Pengajuan");
+    XLSX.writeFile(workbook,"Data_Pengajuan.xlsx");
+}
+
+loadData();
+setInterval(loadData,10000);
 </script>
 
 </body>

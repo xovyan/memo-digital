@@ -114,16 +114,20 @@ document.getElementById(btn.dataset.tab).style.display="block";
 // Logout
 function logout(){localStorage.removeItem("userSession");window.location.href="login_management.html";}
 
-// Ganti password
+// Ganti password tanpa hash
 document.getElementById("formGantiPassword").addEventListener("submit", async function(e){
   e.preventDefault();
   const lama=document.getElementById("lama").value.trim();
   const baru=document.getElementById("baru").value.trim();
-  if(lama!==session.password) return alert("Password lama salah"); // session.password tidak tersimpan, bisa dicari
+
   try{
     const querySnap = await db.collection("users").where("username","==",session.username).get();
     if(querySnap.empty) return alert("User tidak ditemukan");
+    const data=querySnap.docs[0].data();
     const docId=querySnap.docs[0].id;
+
+    if(lama!==data.password) return alert("Password lama salah");
+
     await db.collection("users").doc(docId).update({password:baru});
     alert("Password berhasil diganti");
     document.getElementById("formGantiPassword").reset();

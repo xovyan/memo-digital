@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login</title>
+<title>Login Final</title>
 <style>
 body{font-family:Arial;background:#f4f6f9;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
 .login-box{background:white;padding:30px;border-radius:10px;box-shadow:0 4px 15px rgba(0,0,0,0.2);width:300px;}
@@ -28,6 +28,7 @@ body{font-family:Arial;background:#f4f6f9;display:flex;justify-content:center;al
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
+// Konfigurasi Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyCaPM6CNaiK-VZYR0-dkrrYMANiWi8pUGw",
   authDomain: "memodigital-57c0c.firebaseapp.com",
@@ -49,23 +50,20 @@ document.getElementById("loginBtn").addEventListener("click", async ()=>{
   if(!usernameInput || !passwordInput) return showPopup("Isi username dan password");
 
   try{
-    // Ambil dokumen sesuai input
-    const docRef = db.collection("users").doc(usernameInput);
-    const docSnap = await docRef.get();
-
-    if(!docSnap.exists){
+    // Query field username, jangan pakai doc ID
+    const snapshot = await db.collection("users").where("username","==",usernameInput).get();
+    if(snapshot.empty){
       return showPopup("Username tidak ditemukan");
     }
 
-    const userData = docSnap.data();
-
+    const userData = snapshot.docs[0].data();
     if(userData.password !== passwordInput){
       return showPopup("Password salah");
     }
 
-    // Simpan session
+    // Simpan session di localStorage
     localStorage.setItem("userSession", JSON.stringify({
-      username: usernameInput,
+      username: userData.username,
       role: userData.role
     }));
 

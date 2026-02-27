@@ -6,71 +6,36 @@
 <title>Dashboard Management</title>
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
 body{background:#f4f6f9}
 header{background:#4e54c8;color:#fff;padding:15px;text-align:center;font-size:20px}
 nav{display:flex;background:#fff}
-nav button{
-flex:1;
-padding:12px;
-border:none;
-background:none;
-font-weight:bold;
-color:#4e54c8;
-cursor:pointer
-}
+nav button{flex:1;padding:12px;border:none;background:none;font-weight:bold;color:#4e54c8;cursor:pointer}
 nav button.active{border-bottom:3px solid #4e54c8}
 section{padding:15px}
 form input,form select,form textarea,form button{
-width:100%;
-margin-bottom:10px;
-padding:10px;
-border-radius:8px;
-border:1px solid #ccc;
-font-size:14px
+width:100%;margin-bottom:10px;padding:10px;border-radius:8px;border:1px solid #ccc;font-size:14px
 }
-form button{
-background:#4e54c8;
-color:#fff;
-font-weight:bold;
-border:none;
-cursor:pointer
-}
-.nopol-group{
-display:flex;
-gap:5px;
-margin-bottom:5px
-}
+form button{background:#4e54c8;color:#fff;font-weight:bold;border:none;cursor:pointer}
+.nopol-group{display:flex;gap:5px;margin-bottom:5px}
 .nopol-group input{flex:1}
-.nopol-group button{
-width:35px;
-background:red;
-color:#fff;
-border:none;
-border-radius:6px;
-font-weight:bold;
-cursor:pointer
-}
-table{
-width:100%;
-border-collapse:collapse;
-margin-top:15px;
-background:#fff;
-font-size:13px
-}
-th,td{
-border:1px solid #ccc;
-padding:6px;
-text-align:center
-}
+.nopol-group button{width:35px;background:red;color:#fff;border:none;border-radius:6px}
+table{width:100%;border-collapse:collapse;margin-top:15px;background:#fff;font-size:13px}
+th,td{border:1px solid #ccc;padding:6px;text-align:center}
 th{background:#4e54c8;color:#fff}
 .status-baru{color:red;font-weight:bold}
 .status-sudah{color:green;font-weight:bold}
+.popup{
+position:fixed;top:20px;left:50%;transform:translateX(-50%);
+background:#16a34a;color:#fff;padding:12px 20px;border-radius:8px;
+box-shadow:0 4px 10px rgba(0,0,0,0.2);display:none;z-index:999;
+}
 </style>
 </head>
 <body>
 
 <header>Dashboard Management</header>
+<div class="popup" id="popup">Data berhasil dikirim ✅</div>
 
 <nav>
 <button class="tab-btn active" data-tab="pengajuan">Pengajuan</button>
@@ -81,9 +46,7 @@ th{background:#4e54c8;color:#fff}
 
 <section>
 
-<!-- ================= PENGAJUAN ================= -->
 <div class="tab" id="pengajuan">
-
 <form id="formPengajuan" autocomplete="off">
 
 <select name="jenis_pengajuan" required>
@@ -109,9 +72,7 @@ th{background:#4e54c8;color:#fff}
 </form>
 </div>
 
-<!-- ================= RIWAYAT ================= -->
 <div class="tab" id="riwayat" style="display:none">
-
 <table>
 <thead>
 <tr>
@@ -126,10 +87,8 @@ th{background:#4e54c8;color:#fff}
 </thead>
 <tbody id="riwayatData"></tbody>
 </table>
-
 </div>
 
-<!-- ================= GANTI PASSWORD ================= -->
 <div class="tab" id="ganti" style="display:none">
 <form>
 <input type="password" placeholder="Password Lama">
@@ -138,14 +97,12 @@ th{background:#4e54c8;color:#fff}
 </form>
 </div>
 
-<!-- ================= LOGOUT ================= -->
 <div class="tab" id="logout" style="display:none">
 <button onclick="location.href='login_management.html'">Keluar</button>
 </div>
 
 </section>
 
-<!-- ================= FIREBASE ================= -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -158,114 +115,70 @@ storageBucket: "PROJECT_ID.appspot.com",
 messagingSenderId: "SENDER_ID",
 appId: "APP_ID"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-</script>
 
-<script>
-
-/* ================= TAB ================= */
+/* TAB */
 document.querySelectorAll(".tab-btn").forEach(btn=>{
-btn.addEventListener("click",()=>{
+btn.onclick=()=>{
 document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
 btn.classList.add("active");
 document.querySelectorAll(".tab").forEach(t=>t.style.display="none");
 document.getElementById(btn.dataset.tab).style.display="block";
-});
-});
-
-/* ================= NOMOR PLAT DINAMIS ================= */
-const nopolContainer = document.getElementById("nopolContainer");
-
-function createNopolField(){
-const div = document.createElement("div");
-div.className = "nopol-group";
-
-const input = document.createElement("input");
-input.type = "text";
-input.name = "nomor_plat[]";
-input.placeholder = "Nomor Plat";
-input.required = true;
-
-const btn = document.createElement("button");
-btn.type = "button";
-btn.textContent = "×";
-btn.onclick = ()=>{
-if(document.querySelectorAll('input[name="nomor_plat[]"]').length > 1){
-div.remove();
-}
 };
+});
 
-div.appendChild(input);
-div.appendChild(btn);
+/* NOPOL */
+const nopolContainer=document.getElementById("nopolContainer");
+function createNopol(){
+const div=document.createElement("div");
+div.className="nopol-group";
+div.innerHTML=`<input type="text" name="nomor_plat[]" required>
+<button type="button">×</button>`;
+div.querySelector("button").onclick=()=>{
+if(document.querySelectorAll('[name="nomor_plat[]"]').length>1)div.remove();
+};
 return div;
 }
-
 function resetNopol(){
 nopolContainer.innerHTML="";
-nopolContainer.appendChild(createNopolField());
+nopolContainer.appendChild(createNopol());
 }
-
 resetNopol();
+document.getElementById("addNopol").onclick=()=>nopolContainer.appendChild(createNopol());
 
-document.getElementById("addNopol").addEventListener("click",()=>{
-nopolContainer.appendChild(createNopolField());
-});
-
-/* ================= SUBMIT ================= */
-document.getElementById("formPengajuan").addEventListener("submit", async function(e){
-
+/* SUBMIT */
+document.getElementById("formPengajuan").addEventListener("submit",async function(e){
 e.preventDefault();
+const btn=document.getElementById("btnKirim");
+btn.disabled=true;
 
-const btn = document.getElementById("btnKirim");
-btn.disabled = true;
-
-const formData = new FormData(this);
-
-const data = {
-jenis_pengajuan: formData.get("jenis_pengajuan") || "",
-nama: formData.get("nama") || "",
-departement: formData.get("departement") || "",
-jenis_kendaraan: formData.get("jenis_kendaraan") || "",
-periode_awal: formData.get("periode_awal") || "",
-periode_akhir: formData.get("periode_akhir") || "",
-keterangan: formData.get("keterangan") || "",
-status_admin: "belum",
-timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-nomor_plat: []
-};
-
-document.querySelectorAll('input[name="nomor_plat[]"]').forEach(input=>{
-if(input.value.trim()!==""){
-data.nomor_plat.push(input.value.trim());
-}
+const formData=new FormData(this);
+let nomor_plat=[];
+document.querySelectorAll('[name="nomor_plat[]"]').forEach(i=>{
+if(i.value.trim()!=="")nomor_plat.push(i.value.trim());
 });
+if(nomor_plat.length===0){btn.disabled=false;return;}
 
-if(data.nomor_plat.length===0){
-alert("Minimal 1 nomor plat harus diisi");
-btn.disabled = false;
-return;
-}
-
-try{
-
-await db.collection("pengajuan").add(data);
+await db.collection("pengajuan").add({
+...Object.fromEntries(formData.entries()),
+nomor_plat,
+status_admin:"belum",
+timestamp:firebase.firestore.FieldValue.serverTimestamp()
+});
 
 this.reset();
 resetNopol();
+window.scrollTo({top:0,behavior:"smooth"});
 
-alert("Data berhasil dikirim ✅");
+const popup=document.getElementById("popup");
+popup.style.display="block";
+setTimeout(()=>popup.style.display="none",2000);
 
-}catch(err){
-alert("Gagal mengirim: "+err.message);
-}
-
-btn.disabled = false;
-
+btn.disabled=false;
 });
 
-/* ================= RIWAYAT REALTIME ================= */
+/* RIWAYAT */
 db.collection("pengajuan")
 .orderBy("timestamp","desc")
 .onSnapshot(snapshot=>{
@@ -273,23 +186,20 @@ const tbody=document.getElementById("riwayatData");
 tbody.innerHTML="";
 snapshot.forEach(doc=>{
 const d=doc.data();
-const tr=document.createElement("tr");
-tr.innerHTML=`
-<td>${d.jenis_pengajuan}</td>
-<td>${d.nama}</td>
-<td>${d.departement}</td>
+tbody.innerHTML+=`
+<tr>
+<td>${d.jenis_pengajuan||""}</td>
+<td>${d.nama||""}</td>
+<td>${d.departement||""}</td>
 <td>${Array.isArray(d.nomor_plat)?d.nomor_plat.join(", "):""}</td>
 <td>${d.jenis_kendaraan||""}</td>
-<td>${d.periode_awal} s/d ${d.periode_akhir}</td>
+<td>${d.periode_awal||""} s/d ${d.periode_akhir||""}</td>
 <td>${d.status_admin==="sudah di input"
 ?'<span class="status-sudah">Sudah</span>'
 :'<span class="status-baru">Belum</span>'}</td>
-`;
-tbody.appendChild(tr);
+</tr>`;
 });
 });
-
 </script>
-
 </body>
 </html>

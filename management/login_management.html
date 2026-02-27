@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LOGIN MODERN</title>
+<title>LOGIN MODERN INTERAKTIF</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 <style>
 * { margin:0; padding:0; box-sizing:border-box; font-family: 'Poppins', sans-serif; }
 
@@ -23,7 +24,7 @@ body::before {
     content: "";
     position: absolute;
     top:0; left:0; right:0; bottom:0;
-    background: rgba(0,0,0,0.6);
+    background: rgba(0,0,0,0.65);
     z-index:0;
 }
 
@@ -52,20 +53,30 @@ body::before {
     letter-spacing: 1px;
 }
 
-/* Input fields modern */
-.login-container input[type="text"],
-.login-container input[type="password"] {
+/* Input wrapper */
+.input-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+.input-group i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #4e54c8;
+    font-size: 18px;
+}
+.input-group input {
     width:100%;
-    padding:14px 18px;
-    margin:12px 0;
+    padding:14px 18px 14px 45px;
     border:1px solid #ccc;
     border-radius:10px;
     font-size:16px;
     transition: 0.3s;
 }
-.login-container input:focus {
+.input-group input:focus {
     border-color:#4e54c8;
-    box-shadow: 0 0 5px #4e54c8;
+    box-shadow: 0 0 8px #4e54c8;
     outline:none;
 }
 
@@ -73,7 +84,7 @@ body::before {
 .login-container button {
     width:100%;
     padding:14px;
-    margin-top:20px;
+    margin-top:10px;
     border:none;
     border-radius:12px;
     background: linear-gradient(135deg,#4e54c8,#8f94fb);
@@ -81,17 +92,29 @@ body::before {
     font-size:16px;
     font-weight:bold;
     cursor:pointer;
-    transition: 0.3s;
+    overflow:hidden;
+    position: relative;
 }
 .login-container button:hover {
     background: linear-gradient(135deg,#3b3f9a,#6f71e5);
-    transform: translateY(-2px);
+}
+.login-container button:after {
+    content:"";
+    position:absolute;
+    width:100%; height:100%;
+    top:0; left:0;
+    background: rgba(255,255,255,0.2);
+    opacity:0;
+    transition: opacity 0.3s;
+}
+.login-container button:active:after {
+    opacity:1;
 }
 
 /* Link lupa password */
 .login-container .link {
     display:block;
-    margin-top:18px;
+    margin-top:15px;
     text-align:center;
     color:#4e54c8;
     text-decoration:none;
@@ -102,6 +125,13 @@ body::before {
     text-decoration:underline;
     color:#8f94fb;
 }
+
+/* Responsive mobile */
+@media(max-width:480px){
+    .login-container {
+        padding:30px 20px;
+    }
+}
 </style>
 </head>
 <body>
@@ -109,12 +139,21 @@ body::before {
 <div class="login-container">
     <h2>PT SECURINDO PACKATAMA INDONESIA</h2>
     <form id="loginForm">
-        <input type="text" name="username" placeholder="Username" required>
-        <input type="password" name="password" placeholder="Password" required>
+        <div class="input-group">
+            <i class="fas fa-user"></i>
+            <input type="text" name="username" placeholder="Username" required>
+        </div>
+        <div class="input-group">
+            <i class="fas fa-lock"></i>
+            <input type="password" name="password" placeholder="Password" required>
+        </div>
         <button type="submit">Masuk</button>
         <a href="#" class="link">Lupa Password?</a>
     </form>
 </div>
+
+<!-- FontAwesome untuk icon -->
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>

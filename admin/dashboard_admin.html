@@ -14,7 +14,6 @@ h2{
     padding:20px 0;
     background:#2c3e50;
     color:white;
-    letter-spacing:1px;
 }
 
 .container{
@@ -39,42 +38,7 @@ h2{
     color:#27ae60;
 }
 
-.filter-area{
-    display:flex;
-    flex-wrap:wrap;
-    gap:15px;
-    align-items:flex-end;
-    margin-bottom:20px;
-}
-
-.filter-area label{
-    font-weight:600;
-    font-size:14px;
-}
-
-.filter-area input,
-.filter-area button{
-    padding:8px 12px;
-    border-radius:8px;
-    border:1px solid #ddd;
-    font-size:14px;
-}
-
-.filter-area button{
-    background:#2c3e50;
-    color:white;
-    border:none;
-    cursor:pointer;
-    transition:0.3s;
-}
-
-.filter-area button:hover{
-    background:#1a252f;
-}
-
-.table-wrapper{
-    overflow-x:auto;
-}
+.table-wrapper{overflow-x:auto;}
 
 table{
     width:100%;
@@ -88,31 +52,21 @@ th{
     color:white;
     padding:12px;
     text-align:center;
-    position:sticky;
-    top:0;
 }
 
 td{
     padding:10px;
     text-align:center;
-    vertical-align:middle;
     border-bottom:1px solid #eee;
 }
-
-tr:hover{background:#f9fbff;}
 
 .status-aktif{color:green;font-weight:bold;}
 .status-selesai{color:gray;font-weight:bold;}
 .status-sudah{color:blue;font-weight:bold;}
 
 textarea{
-    width:180px;
-    height:65px;
-    resize:vertical;
-    padding:6px;
-    border-radius:6px;
-    border:1px solid #ccc;
-    font-size:12px;
+    width:160px;
+    height:60px;
 }
 
 .btn{
@@ -121,27 +75,10 @@ textarea{
     border:none;
     cursor:pointer;
     font-size:12px;
-    transition:0.2s;
 }
 
-.btn-hapus{
-    background:#e74c3c;
-    color:white;
-}
-
-.btn-sudah{
-    background:#27ae60;
-    color:white;
-}
-
-.btn-hapus:hover{background:#c0392b;}
-.btn-sudah:hover{background:#1e8449;}
-
-@media(max-width:768px){
-    .filter-area{flex-direction:column;align-items:flex-start;}
-    textarea{width:140px;height:55px;}
-    table{font-size:11px;}
-}
+.btn-hapus{background:#e74c3c;color:white;}
+.btn-sudah{background:#27ae60;color:white;}
 </style>
 </head>
 
@@ -152,25 +89,8 @@ textarea{
 <div class="container">
 
 <div class="summary-box">
-    TOTAL PARKIR AKTIF SAAT INI :
-    <span id="total-aktif">0</span>
-</div>
-
-<div class="filter-area">
-    <div>
-        <label>Cari Nama / Plat</label><br>
-        <input type="text" id="cari" placeholder="Cari...">
-    </div>
-
-    <div>
-        <label>Periode Bulan</label><br>
-        <input type="month" id="bulan">
-    </div>
-
-    <div>
-        <button onclick="loadData()">Filter</button>
-        <button onclick="exportExcel()">Export Excel</button>
-    </div>
+TOTAL PARKIR AKTIF SAAT INI :
+<span id="total-aktif">0</span>
 </div>
 
 <div class="table-wrapper">
@@ -183,10 +103,9 @@ textarea{
 <th>Plat</th>
 <th>Kendaraan</th>
 <th>Periode</th>
-<th>Keterangan</th>
 <th>Status</th>
 <th>Status Admin</th>
-<th>Catatan Admin</th>
+<th>Catatan</th>
 <th>Aksi</th>
 </tr>
 </thead>
@@ -196,7 +115,6 @@ textarea{
 
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -205,135 +123,94 @@ const firebaseConfig = {
   apiKey: "AIzaSyCaPM6CNaiK-VZYR0-dkrrYMANiWi8pUGw",
   authDomain: "memodigital-57c0c.firebaseapp.com",
   projectId: "memodigital-57c0c",
-  storageBucket: "memodigital-57c0c.firebasestorage.app",
-  messagingSenderId: "612241421208",
-  appId: "1:612241421208:web:119b13353da40aa51871ed",
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+
 const tableBody = document.getElementById('data-table');
 const totalAktifEl = document.getElementById('total-aktif');
 
-function renderRow(docData, docId){
-    const tr = document.createElement('tr');
-    const today = new Date();
-    const awal = new Date(docData.periode_awal);
-    const akhir = new Date(docData.periode_akhir);
+db.collection('pengajuan')
+.orderBy('timestamp','desc')
+.onSnapshot(snapshot=>{
 
-    let statusText = "-";
-    if(today >= awal && today <= akhir)
-        statusText = "<span class='status-aktif'>Aktif</span>";
-    else if(today > akhir)
-        statusText = "<span class='status-selesai'>Selesai</span>";
+    tableBody.innerHTML='';
+    let totalAktif=0;
+    const today=new Date();
 
-    let statusAdmin = docData.status_admin === "Sudah"
-        ? "<span class='status-sudah'>Sudah</span>"
-        : "-";
+    snapshot.forEach(doc=>{
+        const d=doc.data();
 
-    tr.innerHTML = `
-        <td>${docData.jenis_pengajuan}</td>
-        <td>${docData.nama}</td>
-        <td>${docData.departement}</td>
-        <td>${docData.nomor_plat}</td>
-        <td>${docData.jenis_kendaraan||''}</td>
-        <td>${docData.periode_awal} s/d ${docData.periode_akhir}</td>
-        <td>${docData.keterangan||''}</td>
-        <td>${statusText}</td>
-        <td>${statusAdmin}</td>
-        <td><textarea class="catatan-admin" data-id="${docId}">${docData.catatan_admin||''}</textarea></td>
-        <td>
-            <button class="btn btn-sudah" data-id="${docId}">Sudah Diinput</button>
-            <button class="btn btn-hapus" data-id="${docId}">Hapus</button>
-        </td>
-    `;
-    tableBody.appendChild(tr);
-}
+        // SPLIT PLAT JIKA ADA KOMA
+        let daftarPlat = [];
+        if(d.nomor_plat){
+            daftarPlat = d.nomor_plat.split(',').map(p=>p.trim());
+        }
 
-let unsubscribe=null;
+        daftarPlat.forEach(plat=>{
 
-function loadData(){
-    const cari=document.getElementById('cari').value.toLowerCase();
-    const bulan=document.getElementById('bulan').value;
+            const awal=new Date(d.periode_awal);
+            const akhir=new Date(d.periode_akhir);
 
-    if(unsubscribe) unsubscribe();
-
-    let q=db.collection('pengajuan').orderBy('timestamp','desc');
-
-    unsubscribe=q.onSnapshot(snapshot=>{
-        tableBody.innerHTML='';
-        let totalAktif=0;
-        const today=new Date();
-
-        snapshot.forEach(doc=>{
-            const d=doc.data();
-            let match=true;
-
-            if(cari){
-                match=Object.values(d).some(v=>String(v).toLowerCase().includes(cari));
+            let statusText="-";
+            if(today>=awal && today<=akhir){
+                statusText="<span class='status-aktif'>Aktif</span>";
+                totalAktif++;
+            }
+            else if(today>akhir){
+                statusText="<span class='status-selesai'>Selesai</span>";
             }
 
-            if(bulan){
-                const bln=d.periode_awal.substring(0,7);
-                if(bln!==bulan) match=false;
-            }
+            let statusAdminText = d.status_admin==="Sudah"
+                ? "<span class='status-sudah'>Sudah</span>"
+                : "-";
 
-            if(match){
-                const awal=new Date(d.periode_awal);
-                const akhir=new Date(d.periode_akhir);
-                if(today>=awal && today<=akhir) totalAktif++;
-                renderRow(d,doc.id);
-            }
+            const tr=document.createElement('tr');
+
+            tr.innerHTML=`
+                <td>${d.jenis_pengajuan}</td>
+                <td>${d.nama}</td>
+                <td>${d.departement}</td>
+                <td>${plat}</td>
+                <td>${d.jenis_kendaraan||''}</td>
+                <td>${d.periode_awal} s/d ${d.periode_akhir}</td>
+                <td>${statusText}</td>
+                <td>${statusAdminText}</td>
+                <td>
+                    <textarea data-id="${doc.id}">${d.catatan_admin||''}</textarea>
+                </td>
+                <td>
+                    ${
+                        d.status_admin==="Sudah"
+                        ? ""
+                        : `<button class="btn btn-sudah" onclick="tandaiSudah('${doc.id}')">Sudah Diinput</button>`
+                    }
+                    <button class="btn btn-hapus" onclick="hapusData('${doc.id}')">Hapus</button>
+                </td>
+            `;
+
+            tableBody.appendChild(tr);
         });
-
-        totalAktifEl.textContent=totalAktif;
-
-        aktifkanAutoSave();
-        aktifkanHapus();
-        aktifkanTombolSudah();
     });
+
+    totalAktifEl.textContent=totalAktif;
+});
+
+function tandaiSudah(id){
+    db.collection('pengajuan')
+      .doc(id)
+      .update({
+        status_admin:"Sudah"
+      });
+    alert("Berhasil ditandai Sudah");
 }
 
-function aktifkanAutoSave(){
-    document.querySelectorAll('.catatan-admin').forEach(textarea=>{
-        let timeout=null;
-        textarea.onkeyup=()=>{
-            clearTimeout(timeout);
-            timeout=setTimeout(()=>{
-                db.collection('pengajuan')
-                  .doc(textarea.dataset.id)
-                  .update({
-                    catatan_admin: textarea.value
-                  });
-            },800);
-        };
-    });
+function hapusData(id){
+    if(confirm("Yakin hapus data?")){
+        db.collection('pengajuan').doc(id).delete();
+    }
 }
-
-function aktifkanTombolSudah(){
-    document.querySelectorAll('.btn-sudah').forEach(btn=>{
-        btn.onclick=()=>{
-            db.collection('pengajuan')
-              .doc(btn.dataset.id)
-              .update({
-                status_admin:"Sudah"
-              });
-            alert("Status berhasil diubah menjadi Sudah");
-        };
-    });
-}
-
-function aktifkanHapus(){
-    document.querySelectorAll('.btn-hapus').forEach(btn=>{
-        btn.onclick=()=>{
-            if(confirm("Yakin ingin menghapus data ini?")){
-                db.collection('pengajuan').doc(btn.dataset.id).delete();
-            }
-        };
-    });
-}
-
-loadData();
 </script>
 
 </body>

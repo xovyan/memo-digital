@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login Management/Admin</title>
+<title>Login Dashboard</title>
 <style>
 body{font-family:Arial;background:#f4f6f9;display:flex;justify-content:center;align-items:center;height:100vh}
 form{background:#fff;padding:20px;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,0.1);width:320px}
@@ -34,25 +34,41 @@ const db = firebase.firestore();
 
 document.getElementById("loginForm").addEventListener("submit", async (e)=>{
  e.preventDefault();
+
  const username = document.getElementById("usernameLogin").value.trim();
  const password = document.getElementById("passwordLogin").value.trim();
 
- try {
-   const usersSnap = await db.collection("users").get();
-   let found = false;
-   usersSnap.forEach(doc=>{
+ if(!username || !password){ alert("Isi username dan password!"); return; }
+
+ try{
+   const snapshot = await db.collection("users").get();
+   let userFound = null;
+
+   snapshot.forEach(doc=>{
      const data = doc.data();
-     if(data.username===username && data.password===password){
-       found = true;
-       sessionStorage.setItem("username", username);
-       sessionStorage.setItem("role", data.role);
-       // redirect sesuai role
-       if(data.role==="management") window.location.href="dashboard_management.html";
-       else if(data.role==="admin") window.location.href="dashboard_admin.html";
+     if(data.username === username && data.password === password){
+       userFound = data;
      }
    });
-   if(!found) alert("Username atau password salah!");
- } catch(err) {
+
+   if(userFound){
+     // Simpan sessionStorage
+     sessionStorage.setItem("username", userFound.username);
+     sessionStorage.setItem("role", userFound.role);
+
+     if(userFound.role==="management"){
+       window.location.href="dashboard_management.html";
+     } else if(userFound.role==="admin"){
+       window.location.href="dashboard_admin.html";
+     } else {
+       alert("Role tidak valid!");
+     }
+
+   } else {
+     alert("Username atau password salah!");
+   }
+
+ } catch(err){
    console.error(err);
    alert("Terjadi kesalahan, coba lagi!");
  }

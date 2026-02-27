@@ -46,14 +46,15 @@ box-shadow:0 4px 10px rgba(0,0,0,0.2);display:none;z-index:999;
 
 <section>
 
+<!-- PENGAJUAN -->
 <div class="tab" id="pengajuan">
 <form id="formPengajuan" autocomplete="off">
 
 <select name="jenis_pengajuan" required>
 <option value="">-- Pilih Jenis --</option>
-<option value="free parkir">Free Parkir</option>
-<option value="compliment">Compliment</option>
-<option value="ubah plat">Ubah Plat</option>
+<option value="Free Parkir">Free Parkir</option>
+<option value="Compliment">Compliment</option>
+<option value="Ubah Plat">Ubah Plat</option>
 </select>
 
 <input type="text" name="nama" placeholder="Nama" required>
@@ -72,6 +73,7 @@ box-shadow:0 4px 10px rgba(0,0,0,0.2);display:none;z-index:999;
 </form>
 </div>
 
+<!-- RIWAYAT -->
 <div class="tab" id="riwayat" style="display:none">
 <table>
 <thead>
@@ -111,9 +113,6 @@ const firebaseConfig = {
   apiKey: "AIzaSyCaPM6CNaiK-VZYR0-dkrrYMANiWi8pUGw",
   authDomain: "memodigital-57c0c.firebaseapp.com",
   projectId: "memodigital-57c0c",
-  storageBucket: "memodigital-57c0c.firebasestorage.app",
-  messagingSenderId: "612241421208",
-  appId: "1:612241421208:web:119b13353da40aa51871ed",
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
@@ -162,8 +161,8 @@ if(nomor_plat.length===0){btn.disabled=false;return;}
 
 await db.collection("pengajuan").add({
 ...Object.fromEntries(formData.entries()),
-nomor_plat,
-status_admin:"belum",
+nomor_plat: nomor_plat,
+status_admin:"Belum",
 timestamp:firebase.firestore.FieldValue.serverTimestamp()
 });
 
@@ -178,7 +177,7 @@ setTimeout(()=>popup.style.display="none",2000);
 btn.disabled=false;
 });
 
-/* RIWAYAT - PLAT TERPISAH */
+/* RIWAYAT */
 db.collection("pengajuan")
 .orderBy("timestamp","desc")
 .onSnapshot(snapshot=>{
@@ -187,7 +186,7 @@ tbody.innerHTML="";
 
 snapshot.forEach(doc=>{
 const d=doc.data();
-const daftarPlat=Array.isArray(d.nomor_plat)?d.nomor_plat:[];
+const daftarPlat=Array.isArray(d.nomor_plat)?d.nomor_plat:[d.nomor_plat];
 
 daftarPlat.forEach(plat=>{
 tbody.innerHTML+=`
@@ -195,16 +194,16 @@ tbody.innerHTML+=`
 <td>${d.jenis_pengajuan||""}</td>
 <td>${d.nama||""}</td>
 <td>${d.departement||""}</td>
-<td>${plat}</td>
+<td>${plat||""}</td>
 <td>${d.jenis_kendaraan||""}</td>
 <td>${d.periode_awal||""} s/d ${d.periode_akhir||""}</td>
-<td>${d.status_admin==="sudah di input"
+<td>
+${d.status_admin==="Sudah"
 ?'<span class="status-sudah">Sudah</span>'
 :'<span class="status-baru">Belum</span>'}
 </td>
 </tr>`;
 });
-
 });
 });
 </script>

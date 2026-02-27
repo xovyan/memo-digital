@@ -1,170 +1,108 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin - Free Parkir</title>
-
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif;}
-body{background:#f1f4f9;}
-h2{text-align:center;padding:20px;background:#2c3e50;color:white;}
-.container{width:95%;max-width:1200px;margin:20px auto;background:white;padding:20px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.05);}
-.summary-box{background:#eafaf1;border:2px solid #2ecc71;padding:15px;border-radius:10px;margin-bottom:20px;text-align:center;font-size:18px;font-weight:bold;color:#27ae60;}
-.table-wrapper{overflow-x:auto;}
-table{width:100%;border-collapse:collapse;font-size:13px;}
-th{background:#34495e;color:white;padding:12px;}
-td{padding:10px;text-align:center;border-bottom:1px solid #eee;}
-.status-aktif{color:green;font-weight:bold;}
-.status-selesai{color:gray;font-weight:bold;}
-.status-sudah{color:blue;font-weight:bold;}
-.btn{padding:6px 10px;border-radius:6px;border:none;cursor:pointer;font-size:12px;}
-.btn-sudah{background:#27ae60;color:white;margin-bottom:5px;}
-.btn-hapus{background:#e74c3c;color:white;}
-</style>
+  <title>Dashboard Admin</title>
+  <style>
+    body { font-family: Arial; padding:20px; }
+    table { border-collapse: collapse; width:100%; }
+    th, td { border:1px solid #ccc; padding:8px; text-align:left; }
+    th { background:#f4f4f4; }
+    .btn { padding:5px 10px; cursor:pointer; border:none; border-radius:4px; }
+    .btn-hapus { background:red; color:white; }
+    .btn-sudah { background:green; color:white; }
+    .status-belum { color:red; font-weight:bold; }
+    .status-sudah { color:green; font-weight:bold; }
+  </style>
 </head>
-
 <body>
 
-<h2>KELOLA ADMIN</h2>
+<h2>Dashboard Admin</h2>
 
-<div class="container">
-
-<div class="summary-box">
-TOTAL PARKIR AKTIF SAAT INI :
-<span id="total-aktif">0</span>
-</div>
-
-<div class="table-wrapper">
 <table>
-<thead>
-<tr>
-<th>Jenis</th>
-<th>Nama</th>
-<th>Departement</th>
-<th>Plat</th>
-<th>Kendaraan</th>
-<th>Periode</th>
-<th>Keterangan</th>
-<th>Status</th>
-<th>Status Admin</th>
-<th>Aksi</th>
-</tr>
-</thead>
-<tbody id="data-table"></tbody>
+  <thead>
+    <tr>
+      <th>Nama</th>
+      <th>Judul</th>
+      <th>Nomor Plat</th>
+      <th>Status</th>
+      <th>Aksi</th>
+    </tr>
+  </thead>
+  <tbody id="dataBody"></tbody>
 </table>
-</div>
 
-</div>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  const firebaseConfig = {
+    apiKey: "ISI_APIKEY_KAMU",
+    authDomain: "ISI_AUTHDOMAIN_KAMU",
+    projectId: "ISI_PROJECTID_KAMU",
+    storageBucket: "ISI_STORAGE_KAMU",
+    messagingSenderId: "ISI_SENDERID_KAMU",
+    appId: "ISI_APPID_KAMU"
+  };
 
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyCaPM6CNaiK-VZYR0-dkrrYMANiWi8pUGw",
-  authDomain: "memodigital-57c0c.firebaseapp.com",
-  projectId: "memodigital-57c0c",
-};
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const dataBody = document.getElementById("dataBody");
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+  onSnapshot(collection(db, "pengajuan"), (snapshot) => {
+    dataBody.innerHTML = "";
 
-const tableBody = document.getElementById('data-table');
-const totalAktifEl = document.getElementById('total-aktif');
+    snapshot.forEach((item) => {
+      const data = item.data();
+      const tr = document.createElement("tr");
 
-function renderRow(data,id){
+      // FORMAT NOMOR PLAT PER BARIS
+      let platFormatted = "-";
 
-    const today = new Date();
-    const awal = new Date(data.periode_awal);
-    const akhir = new Date(data.periode_akhir);
-
-    let statusText="-";
-    if(today>=awal && today<=akhir){
-        statusText="<span class='status-aktif'>Aktif</span>";
-    }else if(today>akhir){
-        statusText="<span class='status-selesai'>Selesai</span>";
-    }
-
-    // 🔥 FIX PLAT ARRAY ATAU STRING
-    let platFormatted="-";
-    if(Array.isArray(data.nomor_plat)){
+      if (Array.isArray(data.nomor_plat)) {
         platFormatted = data.nomor_plat.join("<br>");
-    }else if(typeof data.nomor_plat === "string"){
-        platFormatted = data.nomor_plat.split(",").map(p=>p.trim()).join("<br>");
-    }
+      } else if (typeof data.nomor_plat === "string") {
+        platFormatted = data.nomor_plat
+          .split(",")
+          .map(p => p.trim())
+          .join("<br>");
+      }
 
-    let statusAdmin = data.status_admin==="Sudah"
-        ? "<span class='status-sudah'>Sudah</span>"
-        : "Belum";
+      const status = data.status || "Belum";
 
-    const tr=document.createElement("tr");
-
-    tr.innerHTML=`
-        <td>${data.jenis_pengajuan||''}</td>
-        <td>${data.nama||''}</td>
-        <td>${data.departement||''}</td>
+      tr.innerHTML = `
+        <td>${data.nama || "-"}</td>
+        <td>${data.judul || "-"}</td>
         <td>${platFormatted}</td>
-        <td>${data.jenis_kendaraan||''}</td>
-        <td>${data.periode_awal||''} s/d ${data.periode_akhir||''}</td>
-        <td>${data.keterangan||''}</td>
-        <td>${statusText}</td>
-        <td>${statusAdmin}</td>
-        <td>
-            ${
-                data.status_admin==="Sudah"
-                ? ""
-                : `<button class="btn btn-sudah" onclick="tandaiSudah('${id}')">Sudah Input</button>`
-            }
-            <button class="btn btn-hapus" onclick="hapusData('${id}')">Hapus</button>
+        <td class="${status === 'Sudah' ? 'status-sudah' : 'status-belum'}">
+          ${status}
         </td>
-    `;
+        <td>
+          ${status !== "Sudah" ? 
+            `<button class="btn btn-sudah" onclick="sudahInput('${item.id}')">Sudah Input</button>` 
+            : ""}
+          <button class="btn btn-hapus" onclick="hapusData('${item.id}')">Hapus</button>
+        </td>
+      `;
 
-    tableBody.appendChild(tr);
-}
-
-function tandaiSudah(id){
-    db.collection("pengajuan").doc(id).update({
-        status_admin:"Sudah"
+      dataBody.appendChild(tr);
     });
-}
+  });
 
-function hapusData(id){
+  // HAPUS DATA
+  window.hapusData = async (id) => {
     if(confirm("Yakin hapus data?")){
-        db.collection("pengajuan").doc(id).delete();
+      await deleteDoc(doc(db, "pengajuan", id));
+      alert("Data dihapus");
     }
-}
+  };
 
-function loadData(){
-
-    db.collection("pengajuan")
-    .orderBy("timestamp","desc")
-    .onSnapshot(snapshot=>{
-
-        tableBody.innerHTML="";
-        let totalAktif=0;
-        const today=new Date();
-
-        if(snapshot.empty){
-            tableBody.innerHTML="<tr><td colspan='10'>Belum ada data</td></tr>";
-            totalAktifEl.textContent=0;
-            return;
-        }
-
-        snapshot.forEach(doc=>{
-            const d=doc.data();
-            const awal=new Date(d.periode_awal);
-            const akhir=new Date(d.periode_akhir);
-            if(today>=awal && today<=akhir) totalAktif++;
-            renderRow(d,doc.id);
-        });
-
-        totalAktifEl.textContent=totalAktif;
+  // UBAH STATUS JADI SUDAH
+  window.sudahInput = async (id) => {
+    await updateDoc(doc(db, "pengajuan", id), {
+      status: "Sudah"
     });
-
-}
-
-loadData();
+    alert("Status diubah menjadi Sudah");
+  };
 </script>
 
 </body>

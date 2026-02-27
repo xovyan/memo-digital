@@ -6,37 +6,28 @@
 <title>Admin - Free Parkir</title>
 
 <style>
-/* Reset & Base */
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif;}
 body{background:#f1f4f9;}
-h2{text-align:center;padding:20px;background:#2c3e50;color:white;border-radius:6px 6px 0 0;}
-.container{width:95%;max-width:1200px;margin:20px auto;background:white;padding:20px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.1);}
-
-/* Summary */
-.summary-box{background:#eafaf1;border:2px solid #2ecc71;padding:15px;border-radius:10px;margin-bottom:15px;text-align:center;font-size:18px;font-weight:bold;color:#27ae60;}
+h2{text-align:center;padding:20px;background:#2c3e50;color:white;}
+.container{width:95%;max-width:1200px;margin:20px auto;background:white;padding:20px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.05);}
+.summary-box{background:#eafaf1;border:2px solid #2ecc71;padding:15px;border-radius:10px;margin-bottom:10px;text-align:center;font-size:18px;font-weight:bold;color:#27ae60;}
 .summary-box span{display:block;margin-top:5px;font-size:16px;color:#34495e;}
-
-/* Filter Box */
-.filter-box{margin-bottom:15px;display:flex;gap:10px;flex-wrap:wrap;}
-.filter-box input, .filter-box select{padding:8px 12px;border-radius:6px;border:1px solid #ccc;font-size:14px;flex:1;min-width:120px;}
-.filter-box button{padding:8px 12px;border:none;border-radius:6px;background:#2980b9;color:white;cursor:pointer;font-weight:bold;flex:none;}
-
-/* Table */
+.filter-box{margin-bottom:10px;display:flex;gap:10px;flex-wrap:wrap;}
+.filter-box input, .filter-box select{padding:6px 10px;border-radius:6px;border:1px solid #ccc;}
 .table-wrapper{overflow-x:auto;}
-table{width:100%;border-collapse:collapse;font-size:14px;}
-th{background:#34495e;color:white;padding:12px;text-align:center;position:sticky;top:0;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{background:#34495e;color:white;padding:12px;text-align:center;}
 td{padding:10px;text-align:center;border-bottom:1px solid #eee;vertical-align:middle;}
-
-/* Status */
 .status-aktif{color:green;font-weight:bold;}
 .status-selesai{color:gray;font-weight:bold;}
 .status-sudah{color:blue;font-weight:bold;}
-
-/* Buttons */
-.btn{padding:6px 12px;border-radius:6px;border:none;cursor:pointer;font-size:12px;margin:2px;}
+.btn{padding:6px 10px;border-radius:6px;border:none;cursor:pointer;font-size:12px;margin:2px;}
 .btn-sudah{background:#27ae60;color:white;}
 .btn-hapus{background:#e74c3c;color:white;}
 .btn-export{background:#2980b9;color:white;}
+/* Warna baris berdasarkan status admin */
+tr.status-belum{background:#fdecea;}  /* soft merah untuk Belum */
+tr.status-sudah{background:#eafaf1;}  /* soft hijau untuk Sudah */
 </style>
 </head>
 
@@ -46,13 +37,11 @@ td{padding:10px;text-align:center;border-bottom:1px solid #eee;vertical-align:mi
 
 <div class="container">
 
-<!-- Summary -->
 <div class="summary-box">
 TOTAL PARKIR AKTIF SAAT INI : <span id="total-aktif">0</span>
 <span>TOTAL BELUM DI INPUT : <span id="total-belum">0</span></span>
 </div>
 
-<!-- Filter -->
 <div class="filter-box">
 <input type="text" id="filter-nama" placeholder="Cari Nama">
 <input type="text" id="filter-dept" placeholder="Cari Departement">
@@ -65,7 +54,6 @@ TOTAL PARKIR AKTIF SAAT INI : <span id="total-aktif">0</span>
 <button class="btn btn-export" id="exportExcel">Export Excel</button>
 </div>
 
-<!-- Table -->
 <div class="table-wrapper">
 <table>
 <thead>
@@ -105,12 +93,13 @@ const tableBody = document.getElementById('data-table');
 const totalAktifEl = document.getElementById('total-aktif');
 const totalBelumEl = document.getElementById('total-belum');
 
+// Filter inputs
 const filterNama = document.getElementById('filter-nama');
 const filterDept = document.getElementById('filter-dept');
 const filterPlat = document.getElementById('filter-plat');
 const filterStatus = document.getElementById('filter-status');
 
-let dataGlobal = [];
+let dataGlobal = []; // simpan semua data untuk filter/export
 
 function renderRow(data, docId, plat, statusAdmin){
     const today = new Date();
@@ -129,6 +118,9 @@ function renderRow(data, docId, plat, statusAdmin){
     tr.dataset.dept = data.departement || '';
     tr.dataset.plat = plat || '';
     tr.dataset.status = statusAdmin || '';
+
+    // Tambahkan class warna berdasarkan status admin
+    tr.className = statusAdmin === "Sudah" ? "status-sudah" : "status-belum";
 
     tr.innerHTML = `
         <td>${data.jenis_pengajuan||''}</td>
@@ -154,9 +146,13 @@ function tandaiSudah(docId, plat){
         let d = doc.data();
         let platArray = Array.isArray(d.nomor_plat)?d.nomor_plat:[d.nomor_plat];
         let statusArray = Array.isArray(d.status_admin_per_plat)?d.status_admin_per_plat:platArray.map(p=>"Belum");
+
         const index = platArray.indexOf(plat);
         if(index>=0) statusArray[index]="Sudah";
-        db.collection("pengajuan").doc(docId).update({status_admin_per_plat: statusArray});
+
+        db.collection("pengajuan").doc(docId).update({
+            status_admin_per_plat: statusArray,
+        });
     });
 }
 
@@ -167,7 +163,9 @@ function hapusData(id){
 }
 
 function loadData(){
-    db.collection("pengajuan").orderBy("timestamp","desc").onSnapshot(snapshot=>{
+    db.collection("pengajuan")
+    .orderBy("timestamp","desc")
+    .onSnapshot(snapshot=>{
         tableBody.innerHTML="";
         dataGlobal = [];
         let totalAktif=0;
@@ -200,6 +198,7 @@ function loadData(){
     });
 }
 
+// Filter
 function applyFilter(){
     const namaVal = filterNama.value.toLowerCase();
     const deptVal = filterDept.value.toLowerCase();
@@ -232,11 +231,13 @@ function applyFilter(){
     totalBelumEl.textContent = totalBelum;
 }
 
+// Event listeners filter
 filterNama.addEventListener("input", applyFilter);
 filterDept.addEventListener("input", applyFilter);
 filterPlat.addEventListener("input", applyFilter);
 filterStatus.addEventListener("change", applyFilter);
 
+// Export Excel
 document.getElementById('exportExcel').addEventListener('click', ()=>{
     const wb = XLSX.utils.book_new();
     const ws_data = [["Jenis","Nama","Departement","Plat","Kendaraan","Periode","Keterangan","Status","Status Admin"]];

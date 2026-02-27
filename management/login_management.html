@@ -76,7 +76,6 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         if(data.role === "management"){
             window.location.href = "dashboard_management.html";
         } else if(data.role === "admin"){
-            window.location.href = "dashboard_admin.html";
         } else {
             alert("Role tidak dikenali!");
         }

@@ -5,72 +5,65 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login Management</title>
 <style>
-body{font-family:Arial;background:#f4f6f9;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
-.login-box{background:#fff;padding:30px;border-radius:10px;box-shadow:0 4px 15px rgba(0,0,0,0.2);width:320px}
-h2{text-align:center;color:#4e54c8;margin-bottom:20px}
-input{width:100%;padding:10px;margin-bottom:15px;border-radius:6px;border:1px solid #ccc;font-size:14px}
-button{width:100%;padding:10px;border:none;border-radius:6px;background:#4e54c8;color:#fff;font-weight:bold;font-size:16px;cursor:pointer}
-.popup{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:red;color:#fff;padding:12px 20px;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,0.2);display:none;z-index:999;text-align:center}
+body{font-family:Arial;background:#f4f6f9;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}
+.login-box{background:white;padding:30px;border-radius:10px;box-shadow:0 4px 15px rgba(0,0,0,0.2);width:300px;}
+.login-box h2{text-align:center;margin-bottom:20px;}
+.login-box input{width:100%;padding:10px;margin-bottom:15px;border-radius:6px;border:1px solid #ccc;font-size:14px;}
+.login-box button{width:100%;padding:10px;background:#4e54c8;color:white;font-weight:bold;border:none;border-radius:6px;cursor:pointer;}
+.popup{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:red;color:white;padding:12px 20px;border-radius:8px;display:none;z-index:999;}
 </style>
 </head>
 <body>
 
 <div class="login-box">
 <h2>Login Management</h2>
-<input type="text" id="username" placeholder="Username" autocomplete="off">
-<input type="password" id="password" placeholder="Password" autocomplete="off">
+<input type="text" id="username" placeholder="Username">
+<input type="password" id="password" placeholder="Password">
 <button id="loginBtn">Login</button>
 </div>
 
-<div class="popup" id="popup">Username atau password salah</div>
+<div class="popup" id="popup"></div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
-// ===== FIREBASE =====
 const firebaseConfig = {
   apiKey: "AIzaSyCaPM6CNaiK-VZYR0-dkrrYMANiWi8pUGw",
   authDomain: "memodigital-57c0c.firebaseapp.com",
-  projectId: "memodigital-57c0c",
+  projectId: "memodigital-57c0c"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// ===== LOGIN =====
+function showPopup(msg){
+  const popup=document.getElementById("popup");
+  popup.textContent=msg;
+  popup.style.display="block";
+  setTimeout(()=>popup.style.display="none",2000);
+}
+
 document.getElementById("loginBtn").addEventListener("click", async ()=>{
-  const username=document.getElementById("username").value.trim();
-  const password=document.getElementById("password").value.trim();
-  if(!username || !password) return showPopup("Isi username dan password");
+  const usernameInput = document.getElementById("username").value.trim();
+  const passwordInput = document.getElementById("password").value.trim();
+  if(!usernameInput || !passwordInput) return showPopup("Isi username dan password");
 
   try{
-    const userRef = db.collection("users").doc(username);
-    const docSnap = await userRef.get();
-    if(!docSnap.exists) return showPopup("Username tidak ditemukan");
+    const querySnap = await db.collection("users").where("username","==",usernameInput).get();
+    if(querySnap.empty) return showPopup("Username tidak ditemukan");
 
-    const data = docSnap.data();
-    if(password !== data.password) return showPopup("Password salah");
-
-    // hanya untuk management
+    const data = querySnap.docs[0].data();
+    if(passwordInput !== data.password) return showPopup("Password salah");
     if(data.role !== "management") return showPopup("Hanya management yang bisa login");
 
-    // simpan session
     localStorage.setItem("userSession", JSON.stringify({username:data.username, role:data.role}));
-
-    // redirect ke dashboard
     window.location.href="dashboard_management.html";
-  } catch(err){
+
+  }catch(err){
     console.error(err);
     showPopup("Terjadi kesalahan, coba lagi");
   }
 });
-
-function showPopup(msg){
-  const pop=document.getElementById("popup");
-  pop.textContent=msg;
-  pop.style.display="block";
-  setTimeout(()=>pop.style.display="none",2000);
-}
 </script>
 
 </body>

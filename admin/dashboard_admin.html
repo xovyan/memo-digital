@@ -3,35 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin - Free Parkir</title>
+<title>Admin Dashboard - Free Parkir</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif;}
 body{background:#f4f6f9;}
-h2{text-align:center;padding:20px;background:#2c3e50;color:white;box-shadow:0 2px 5px rgba(0,0,0,0.1);}
-.container{width:95%;max-width:1200px;margin:20px auto;padding:20px;background:white;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.05);}
-.summary-box{background:#eafaf1;border:2px solid #2ecc71;padding:20px;border-radius:10px;margin-bottom:15px;text-align:center;font-size:18px;font-weight:bold;color:#27ae60;display:flex;justify-content:space-around;flex-wrap:wrap;}
-.summary-box span{display:block;margin-top:5px;font-size:16px;color:#34495e;}
+h2{text-align:center;padding:20px;background:#2c3e50;color:white;box-shadow:0 2px 6px rgba(0,0,0,0.1);border-radius:0 0 10px 10px;}
+.container{width:95%;max-width:1250px;margin:20px auto;padding:20px;background:white;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.05);}
+.summary-box{display:flex;justify-content:space-around;flex-wrap:wrap;margin-bottom:20px;}
+.summary-card{flex:1;min-width:220px;background:#eafaf1;border:2px solid #2ecc71;padding:20px;border-radius:12px;margin:5px;transition:0.3s;cursor:pointer;text-align:center;}
+.summary-card:hover{box-shadow:0 4px 15px rgba(0,0,0,0.1);}
+.summary-card h3{font-size:22px;color:#27ae60;margin-bottom:5px;}
+.summary-card p{font-size:16px;color:#34495e;}
 .filter-box{margin-bottom:15px;display:flex;gap:10px;flex-wrap:wrap;}
-.filter-box input, .filter-box select, .filter-box button{padding:8px 12px;font-size:14px;border-radius:8px;border:1px solid #ccc;}
-.filter-box button{cursor:pointer;transition:0.2s;}
+.filter-box input, .filter-box select, .filter-box button{padding:10px 14px;font-size:14px;border-radius:8px;border:1px solid #ccc;transition:0.2s;}
+.filter-box input:focus, .filter-box select:focus{border-color:#2ecc71;outline:none;}
+.filter-box button{cursor:pointer;background:#2980b9;color:white;font-weight:bold;border:none;}
 .filter-box button:hover{opacity:0.85;}
 .table-wrapper{overflow-x:auto;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.05);}
 table{width:100%;border-collapse:collapse;font-size:13px;}
-th{background:#34495e;color:white;padding:12px;text-align:center;position:sticky;top:0;}
+th{background:#34495e;color:white;padding:12px;text-align:center;position:sticky;top:0;z-index:2;}
 td{padding:10px;text-align:center;border-bottom:1px solid #eee;vertical-align:middle;}
 tr:nth-child(even){background:#f9f9f9;}
-tr:hover{background:#f1f4f9;}
-tr.belum{background:#fff3e0;} /* highlight baris Belum */
+tr:hover{background:#f1f4f9;transition:0.2s;}
+tr.belum{background:#fff3e0;font-weight:bold;}
 .status-aktif{color:green;font-weight:bold;}
 .status-selesai{color:gray;font-weight:bold;}
 .status-sudah{color:blue;font-weight:bold;}
-.btn{padding:6px 10px;border-radius:6px;border:none;cursor:pointer;font-size:12px;margin:2px;transition:0.2s;}
+.btn{padding:6px 10px;border-radius:6px;border:none;cursor:pointer;font-size:12px;margin:2px;transition:0.2s;position:relative;}
 .btn-sudah{background:#27ae60;color:white;}
-.btn-sudah:hover{opacity:0.85;}
+.btn-sudah:hover{opacity:0.9;}
 .btn-hapus{background:#e74c3c;color:white;}
-.btn-hapus:hover{opacity:0.85;}
+.btn-hapus:hover{opacity:0.9;}
 .btn-export{background:#2980b9;color:white;}
-.btn-export:hover{opacity:0.85;}
+.btn-export:hover{opacity:0.9;}
+.tooltip{position:absolute;background:#34495e;color:white;padding:4px 8px;border-radius:4px;font-size:12px;opacity:0;transition:0.2s;pointer-events:none;white-space:nowrap;z-index:10;}
+.popup-notif{position:fixed;top:20px;right:20px;background:#27ae60;color:white;padding:12px 20px;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,0.2);display:none;z-index:999;}
 @media(max-width:768px){
  .filter-box{flex-direction:column;}
  .summary-box{flex-direction:column;align-items:center;}
@@ -44,8 +50,14 @@ tr.belum{background:#fff3e0;} /* highlight baris Belum */
 <div class="container">
 
 <div class="summary-box">
-<span>TOTAL PARKIR AKTIF SAAT INI: <strong id="total-aktif">0</strong></span>
-<span>TOTAL BELUM DI INPUT: <strong id="total-belum">0</strong></span>
+<div class="summary-card">
+<h3 id="total-aktif">0</h3>
+<p>Total Parkir Aktif</p>
+</div>
+<div class="summary-card">
+<h3 id="total-belum">0</h3>
+<p>Total Belum Diinput</p>
+</div>
 </div>
 
 <div class="filter-box">
@@ -79,8 +91,9 @@ tr.belum{background:#fff3e0;} /* highlight baris Belum */
 <tbody id="data-table"></tbody>
 </table>
 </div>
-
 </div>
+
+<div class="popup-notif" id="popup">Data berhasil dikirim ✅</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -99,12 +112,19 @@ const db = firebase.firestore();
 const tableBody = document.getElementById('data-table');
 const totalAktifEl = document.getElementById('total-aktif');
 const totalBelumEl = document.getElementById('total-belum');
+const popup = document.getElementById('popup');
 const filterNama = document.getElementById('filter-nama');
 const filterDept = document.getElementById('filter-dept');
 const filterPlat = document.getElementById('filter-plat');
 const filterStatus = document.getElementById('filter-status');
 
 let dataGlobal = [];
+
+function showPopup(msg){
+  popup.textContent = msg;
+  popup.style.display="block";
+  setTimeout(()=>popup.style.display="none",2000);
+}
 
 function renderRow(data, docId, plat, statusAdmin){
     const today = new Date();
@@ -121,7 +141,7 @@ function renderRow(data, docId, plat, statusAdmin){
     tr.dataset.plat = plat || '';
     tr.dataset.status = statusAdmin || '';
 
-    if(statusAdmin==="Belum") tr.classList.add('belum'); // highlight baris Belum
+    if(statusAdmin==="Belum") tr.classList.add('belum');
 
     tr.innerHTML = `
         <td>${data.jenis_pengajuan||''}</td>
@@ -150,6 +170,7 @@ function tandaiSudah(docId, plat){
         const index = platArray.indexOf(plat);
         if(index>=0) statusArray[index]="Sudah";
         db.collection("pengajuan").doc(docId).update({status_admin_per_plat: statusArray});
+        showPopup(`Plat ${plat} sudah diinput ✅`);
     });
 }
 
@@ -165,6 +186,7 @@ function hapusData(docId, plat){
                 platArray.splice(index,1);
                 statusArray.splice(index,1);
                 db.collection("pengajuan").doc(docId).update({nomor_plat:platArray,status_admin_per_plat:statusArray});
+                showPopup(`Plat ${plat} berhasil dihapus ✅`);
             }
         }else{
             if(confirm("Yakin hapus data ini?")) db.collection("pengajuan").doc(docId).delete();

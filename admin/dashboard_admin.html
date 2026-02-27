@@ -86,13 +86,12 @@ function renderRow(data,id){
         statusText="<span class='status-selesai'>Selesai</span>";
     }
 
-    // Plat jadi baris baru
+    // 🔥 FIX PLAT ARRAY ATAU STRING
     let platFormatted="-";
-    if(data.nomor_plat){
-        platFormatted=data.nomor_plat
-            .split(",")
-            .map(p=>p.trim())
-            .join("<br>");
+    if(Array.isArray(data.nomor_plat)){
+        platFormatted = data.nomor_plat.join("<br>");
+    }else if(typeof data.nomor_plat === "string"){
+        platFormatted = data.nomor_plat.split(",").map(p=>p.trim()).join("<br>");
     }
 
     let statusAdmin = data.status_admin==="Sudah"
@@ -139,6 +138,7 @@ function hapusData(id){
 function loadData(){
 
     db.collection("pengajuan")
+    .orderBy("timestamp","desc")
     .onSnapshot(snapshot=>{
 
         tableBody.innerHTML="";

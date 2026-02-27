@@ -3,70 +3,56 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Dashboard - Filter & Excel</title>
+<title>Admin - Free Parkir</title>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif;}
 body{background:#f1f4f9;}
 h2{text-align:center;padding:20px;background:#2c3e50;color:white;}
 .container{width:95%;max-width:1200px;margin:20px auto;background:white;padding:20px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.05);}
-.summary-box{background:#eafaf1;border:2px solid #2ecc71;padding:15px;border-radius:10px;margin-bottom:10px;text-align:center;font-size:16px;font-weight:bold;color:#27ae60;word-break:break-word;}
-.filters{margin-bottom:15px;display:flex;gap:10px;flex-wrap:wrap;}
-.filters input{padding:8px;border-radius:6px;border:1px solid #ccc;flex:1;}
-.filters button{padding:8px 12px;border-radius:6px;border:none;background:#3498db;color:white;cursor:pointer;}
+.summary-box{background:#eafaf1;border:2px solid #2ecc71;padding:15px;border-radius:10px;margin-bottom:10px;text-align:center;font-size:18px;font-weight:bold;color:#27ae60;}
+.summary-box span{display:block;margin-top:5px;font-size:16px;color:#34495e;}
+.filter-box{margin-bottom:10px;display:flex;gap:10px;flex-wrap:wrap;}
+.filter-box input, .filter-box select{padding:6px 10px;border-radius:6px;border:1px solid #ccc;}
 .table-wrapper{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
-th{background:#34495e;color:white;padding:10px;white-space:nowrap;}
-td{padding:8px;text-align:center;border-bottom:1px solid #eee;vertical-align:middle;word-break:break-word;}
+th{background:#34495e;color:white;padding:12px;text-align:center;}
+td{padding:10px;text-align:center;border-bottom:1px solid #eee;vertical-align:middle;}
 .status-aktif{color:green;font-weight:bold;}
 .status-selesai{color:gray;font-weight:bold;}
 .status-sudah{color:blue;font-weight:bold;}
-.status-baru{color:red;font-weight:bold;}
-.btn{padding:5px 8px;border-radius:6px;border:none;cursor:pointer;font-size:12px;margin:2px;display:inline-block;}
+.btn{padding:6px 10px;border-radius:6px;border:none;cursor:pointer;font-size:12px;margin:2px;}
 .btn-sudah{background:#27ae60;color:white;}
 .btn-hapus{background:#e74c3c;color:white;}
-@media(max-width:768px){
-  table, thead, tbody, th, td, tr{display:block;}
-  thead tr{display:none;}
-  td{position:relative;padding-left:50%;text-align:left;}
-  td::before{
-    position:absolute;
-    top:8px;
-    left:10px;
-    width:45%;
-    white-space:nowrap;
-    font-weight:bold;
-    content: attr(data-label);
-  }
-  td button{width:100%; margin-top:5px;}
-}
+.btn-export{background:#2980b9;color:white;}
 </style>
 </head>
+
 <body>
 
-<h2>ADMIN DASHBOARD - FREE PARKIR</h2>
+<h2>KELOLA ADMIN</h2>
 
 <div class="container">
 
 <div class="summary-box">
-TOTAL PARKIR AKTIF SAAT INI : <span id="total-aktif">0</span> | TOTAL BELUM DI INPUT : <span id="total-belum">0</span>
+TOTAL PARKIR AKTIF SAAT INI : <span id="total-aktif">0</span>
+<span>TOTAL BELUM DI INPUT : <span id="total-belum">0</span></span>
 </div>
 
-<div class="filters">
-<input type="text" id="filterNama" placeholder="Cari Nama">
-<input type="text" id="filterDept" placeholder="Cari Departement">
-<input type="text" id="filterPlat" placeholder="Cari Plat">
-<select id="filterStatus">
-<option value="">Semua Status Admin</option>
-<option value="Sudah">Sudah</option>
-<option value="Belum">Belum</option>
+<div class="filter-box">
+<input type="text" id="filter-nama" placeholder="Cari Nama">
+<input type="text" id="filter-dept" placeholder="Cari Departement">
+<input type="text" id="filter-plat" placeholder="Cari Plat">
+<select id="filter-status">
+  <option value="">Semua Status</option>
+  <option value="Belum">Belum</option>
+  <option value="Sudah">Sudah</option>
 </select>
-<button id="btnReset">Reset Filter</button>
-<button id="btnExport">Export Excel</button>
+<button class="btn btn-export" id="exportExcel">Export Excel</button>
 </div>
 
 <div class="table-wrapper">
-<table id="mainTable">
+<table>
 <thead>
 <tr>
 <th>Jenis</th>
@@ -104,49 +90,53 @@ const tableBody = document.getElementById('data-table');
 const totalAktifEl = document.getElementById('total-aktif');
 const totalBelumEl = document.getElementById('total-belum');
 
-let allData = [];
+// Filter inputs
+const filterNama = document.getElementById('filter-nama');
+const filterDept = document.getElementById('filter-dept');
+const filterPlat = document.getElementById('filter-plat');
+const filterStatus = document.getElementById('filter-status');
+
+let dataGlobal = []; // simpan semua data untuk filter/export
 
 function renderRow(data, id){
     const today = new Date();
     const awal = new Date(data.periode_awal);
     const akhir = new Date(data.periode_akhir);
 
-    let statusText = today >= awal && today <= akhir
-        ? "<span class='status-aktif'>Aktif</span>"
-        : today > akhir
-            ? "<span class='status-selesai'>Selesai</span>"
-            : "-";
-
-    let platList = [];
-    if(Array.isArray(data.nomor_plat)){
-        platList = data.nomor_plat;
-    } else if(typeof data.nomor_plat === "string"){
-        platList = data.nomor_plat.split(",").map(p=>p.trim());
+    let statusText="-";
+    if(today>=awal && today<=akhir){
+        statusText="<span class='status-aktif'>Aktif</span>";
+    }else if(today>akhir){
+        statusText="<span class='status-selesai'>Selesai</span>";
     }
 
-    let statusAdmin = data.status_admin==="Sudah"
-        ? "<span class='status-sudah'>Sudah</span>"
-        : "<span class='status-baru'>Belum</span>";
+    let platArray = [];
+    if(Array.isArray(data.nomor_plat)){
+        platArray = data.nomor_plat;
+    }else if(typeof data.nomor_plat === "string"){
+        platArray = data.nomor_plat.split(",").map(p=>p.trim());
+    }
 
-    platList.forEach((plat,index)=>{
+    platArray.forEach(plat=>{
         const tr = document.createElement("tr");
-        tr.dataset.nama = data.nama.toLowerCase();
-        tr.dataset.dept = data.departement.toLowerCase();
-        tr.dataset.plat = plat.toLowerCase();
-        tr.dataset.status = data.status_admin;
-        tr.innerHTML=`
-            <td data-label="Jenis">${index===0?data.jenis_pengajuan:''}</td>
-            <td data-label="Nama">${index===0?data.nama:''}</td>
-            <td data-label="Departement">${index===0?data.departement:''}</td>
-            <td data-label="Plat">${plat||''}</td>
-            <td data-label="Kendaraan">${index===0?data.jenis_kendaraan:''}</td>
-            <td data-label="Periode">${index===0?data.periode_awal+' s/d '+data.periode_akhir:''}</td>
-            <td data-label="Keterangan">${index===0?data.keterangan:''}</td>
-            <td data-label="Status">${index===0?statusText:''}</td>
-            <td data-label="Status Admin">${index===0?statusAdmin:''}</td>
-            <td data-label="Aksi">
-                ${index===0?(data.status_admin==="Sudah"?"":`<button class="btn btn-sudah" onclick="tandaiSudah('${id}')">Sudah Input</button>`):''}
-                ${index===0?`<button class="btn btn-hapus" onclick="hapusData('${id}')">Hapus</button>`:''}
+        tr.dataset.nama = data.nama || '';
+        tr.dataset.dept = data.departement || '';
+        tr.dataset.plat = plat || '';
+        tr.dataset.status = data.status_admin || '';
+
+        tr.innerHTML = `
+            <td>${data.jenis_pengajuan||''}</td>
+            <td>${data.nama||''}</td>
+            <td>${data.departement||''}</td>
+            <td>${plat||''}</td>
+            <td>${data.jenis_kendaraan||''}</td>
+            <td>${data.periode_awal||''} s/d ${data.periode_akhir||''}</td>
+            <td>${data.keterangan||''}</td>
+            <td>${statusText}</td>
+            <td>${data.status_admin==="Sudah"?'<span class="status-sudah">Sudah</span>':'Belum'}</td>
+            <td>
+                ${data.status_admin==="Sudah" ? "" : `<button class="btn btn-sudah" onclick="tandaiSudah('${id}')">Sudah Input</button>`}
+                <button class="btn btn-hapus" onclick="hapusData('${id}')">Hapus</button>
             </td>
         `;
         tableBody.appendChild(tr);
@@ -154,7 +144,7 @@ function renderRow(data, id){
 }
 
 function tandaiSudah(id){
-    db.collection("pengajuan").doc(id).update({status_admin:"Sudah"});
+    db.collection("pengajuan").doc(id).update({ status_admin:"Sudah" });
 }
 
 function hapusData(id){
@@ -164,9 +154,11 @@ function hapusData(id){
 }
 
 function loadData(){
-    db.collection("pengajuan").orderBy("timestamp","desc").get().then(snapshot=>{
+    db.collection("pengajuan")
+    .orderBy("timestamp","desc")
+    .onSnapshot(snapshot=>{
         tableBody.innerHTML="";
-        allData = [];
+        dataGlobal = [];
         let totalAktif=0;
         let totalBelum=0;
         const today = new Date();
@@ -180,74 +172,96 @@ function loadData(){
 
         snapshot.forEach(doc=>{
             const d = doc.data();
-            d.id = doc.id;
-            allData.push(d);
-
             const awal = new Date(d.periode_awal);
-            const akhir = new Date(d.periode_awal);
-            if(today >= awal && today <= akhir) totalAktif++;
-            if(d.status_admin!=="Sudah") totalBelum++;
+            const akhir = new Date(d.periode_akhir);
+            if(today>=awal && today<=akhir) totalAktif++;
+            if(d.status_admin !== "Sudah") totalBelum++;
 
+            dataGlobal.push({id: doc.id, ...d});
             renderRow(d, doc.id);
         });
 
-        totalAktifEl.textContent=totalAktif;
-        totalBelumEl.textContent=totalBelum;
+        totalAktifEl.textContent = totalAktif;
+        totalBelumEl.textContent = totalBelum;
     });
 }
 
-loadData();
-
-/* FILTER */
 function applyFilter(){
-    const nama = document.getElementById('filterNama').value.toLowerCase();
-    const dept = document.getElementById('filterDept').value.toLowerCase();
-    const plat = document.getElementById('filterPlat').value.toLowerCase();
-    const status = document.getElementById('filterStatus').value;
+    const namaVal = filterNama.value.toLowerCase();
+    const deptVal = filterDept.value.toLowerCase();
+    const platVal = filterPlat.value.toLowerCase();
+    const statusVal = filterStatus.value;
 
-    tableBody.querySelectorAll('tr').forEach(tr=>{
-        const show = 
-            (!nama || tr.dataset.nama.includes(nama)) &&
-            (!dept || tr.dataset.dept.includes(dept)) &&
-            (!plat || tr.dataset.plat.includes(plat)) &&
-            (!status || tr.dataset.status === status);
-        tr.style.display = show ? '' : 'none';
+    tableBody.innerHTML = "";
+    let totalAktif=0;
+    let totalBelum=0;
+    const today = new Date();
+
+    dataGlobal.forEach(d=>{
+        let platArray = [];
+        if(Array.isArray(d.nomor_plat)){
+            platArray = d.nomor_plat;
+        }else if(typeof d.nomor_plat === "string"){
+            platArray = d.nomor_plat.split(",").map(p=>p.trim());
+        }
+
+        platArray.forEach(plat=>{
+            if( (namaVal && !d.nama.toLowerCase().includes(namaVal)) ) return;
+            if( (deptVal && !d.departement.toLowerCase().includes(deptVal)) ) return;
+            if( (platVal && !plat.toLowerCase().includes(platVal)) ) return;
+            if( statusVal && d.status_admin !== statusVal ) return;
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${d.jenis_pengajuan||''}</td>
+                <td>${d.nama||''}</td>
+                <td>${d.departement||''}</td>
+                <td>${plat||''}</td>
+                <td>${d.jenis_kendaraan||''}</td>
+                <td>${d.periode_awal||''} s/d ${d.periode_akhir||''}</td>
+                <td>${d.keterangan||''}</td>
+                <td>${today>=new Date(d.periode_awal) && today<=new Date(d.periode_akhir) ? "<span class='status-aktif'>Aktif</span>" : "<span class='status-selesai'>Selesai</span>"}</td>
+                <td>${d.status_admin==="Sudah"?'<span class="status-sudah">Sudah</span>':'Belum'}</td>
+                <td>
+                    ${d.status_admin==="Sudah" ? "" : `<button class="btn btn-sudah" onclick="tandaiSudah('${d.id}')">Sudah Input</button>`}
+                    <button class="btn btn-hapus" onclick="hapusData('${d.id}')">Hapus</button>
+                </td>
+            `;
+            tableBody.appendChild(tr);
+
+            if(today>=new Date(d.periode_awal) && today<=new Date(d.periode_akhir)) totalAktif++;
+            if(d.status_admin!=="Sudah") totalBelum++;
+        });
     });
+
+    totalAktifEl.textContent = totalAktif;
+    totalBelumEl.textContent = totalBelum;
 }
 
-document.getElementById('filterNama').addEventListener('input', applyFilter);
-document.getElementById('filterDept').addEventListener('input', applyFilter);
-document.getElementById('filterPlat').addEventListener('input', applyFilter);
-document.getElementById('filterStatus').addEventListener('change', applyFilter);
+// Event listeners filter
+filterNama.addEventListener("input", applyFilter);
+filterDept.addEventListener("input", applyFilter);
+filterPlat.addEventListener("input", applyFilter);
+filterStatus.addEventListener("change", applyFilter);
 
-document.getElementById('btnReset').addEventListener('click', ()=>{
-    document.getElementById('filterNama').value='';
-    document.getElementById('filterDept').value='';
-    document.getElementById('filterPlat').value='';
-    document.getElementById('filterStatus').value='';
-    applyFilter();
-});
-
-/* EXPORT EXCEL */
-document.getElementById('btnExport').addEventListener('click', ()=>{
+// Export Excel
+document.getElementById('exportExcel').addEventListener('click', ()=>{
     const wb = XLSX.utils.book_new();
-    const ws_data = [];
-    const headers = ['Jenis','Nama','Departement','Plat','Kendaraan','Periode','Keterangan','Status','Status Admin'];
-    ws_data.push(headers);
-
-    tableBody.querySelectorAll('tr').forEach(tr=>{
-        if(tr.style.display === 'none') return;
-        const row=[];
-        tr.querySelectorAll('td').forEach(td=>{
+    const ws_data = [["Jenis","Nama","Departement","Plat","Kendaraan","Periode","Keterangan","Status","Status Admin"]];
+    
+    tableBody.querySelectorAll("tr").forEach(tr=>{
+        const row = [];
+        tr.querySelectorAll("td").forEach(td=>{
             row.push(td.textContent.trim());
         });
         ws_data.push(row);
     });
-
     const ws = XLSX.utils.aoa_to_sheet(ws_data);
     XLSX.utils.book_append_sheet(wb, ws, "Pengajuan");
-    XLSX.writeFile(wb, "Pengajuan.xlsx");
+    XLSX.writeFile(wb, "Data_Parkir.xlsx");
 });
+
+loadData();
 </script>
 
 </body>

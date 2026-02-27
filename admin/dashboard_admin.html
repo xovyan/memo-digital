@@ -6,20 +6,10 @@
 <title>Admin - Free Parkir</title>
 
 <style>
-* {
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family: 'Segoe UI', Arial, sans-serif;
-}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif;}
+body{background:#f1f4f9;min-height:100vh;}
 
-body {
-    background: #f1f4f9;
-    min-height:100vh;
-}
-
-/* ===== HEADER ===== */
-h2 {
+h2{
     text-align:center;
     padding:20px 0;
     background:#2c3e50;
@@ -27,8 +17,7 @@ h2 {
     letter-spacing:1px;
 }
 
-/* ===== CONTAINER ===== */
-.container {
+.container{
     width:95%;
     max-width:1200px;
     margin:20px auto;
@@ -38,29 +27,28 @@ h2 {
     box-shadow:0 4px 15px rgba(0,0,0,0.05);
 }
 
-/* ===== FILTER AREA ===== */
-.filter-area {
+.filter-area{
     display:flex;
     flex-wrap:wrap;
     gap:15px;
-    align-items:center;
+    align-items:flex-end;
     margin-bottom:20px;
 }
 
-.filter-area label {
+.filter-area label{
     font-weight:600;
     font-size:14px;
 }
 
 .filter-area input,
-.filter-area button {
+.filter-area button{
     padding:8px 12px;
     border-radius:8px;
     border:1px solid #ddd;
     font-size:14px;
 }
 
-.filter-area button {
+.filter-area button{
     background:#2c3e50;
     color:white;
     border:none;
@@ -68,23 +56,22 @@ h2 {
     transition:0.3s;
 }
 
-.filter-area button:hover {
+.filter-area button:hover{
     background:#1a252f;
 }
 
-/* ===== TABLE ===== */
-.table-wrapper {
+.table-wrapper{
     overflow-x:auto;
 }
 
-table {
+table{
     width:100%;
     border-collapse:collapse;
     font-size:13px;
     min-width:1000px;
 }
 
-th {
+th{
     background:#34495e;
     color:white;
     padding:12px;
@@ -93,30 +80,21 @@ th {
     top:0;
 }
 
-td {
+td{
     padding:10px;
     text-align:center;
     vertical-align:middle;
     border-bottom:1px solid #eee;
 }
 
-tr:hover {
+tr:hover{
     background:#f9fbff;
 }
 
-/* ===== STATUS ===== */
-.status-aktif {
-    color:green;
-    font-weight:bold;
-}
+.status-aktif{color:green;font-weight:bold;}
+.status-selesai{color:gray;font-weight:bold;}
 
-.status-selesai {
-    color:gray;
-    font-weight:bold;
-}
-
-/* ===== TEXTAREA ===== */
-textarea {
+textarea{
     width:180px;
     height:65px;
     resize:vertical;
@@ -126,8 +104,7 @@ textarea {
     font-size:12px;
 }
 
-/* ===== BUTTON ===== */
-.btn {
+.btn{
     padding:6px 12px;
     border-radius:6px;
     border:none;
@@ -136,30 +113,19 @@ textarea {
     transition:0.2s;
 }
 
-.btn-hapus {
+.btn-hapus{
     background:#e74c3c;
     color:white;
 }
 
-.btn-hapus:hover {
+.btn-hapus:hover{
     background:#c0392b;
 }
 
-/* ===== MOBILE ===== */
 @media(max-width:768px){
-    .filter-area {
-        flex-direction:column;
-        align-items:flex-start;
-    }
-
-    textarea {
-        width:140px;
-        height:55px;
-    }
-
-    table {
-        font-size:11px;
-    }
+    .filter-area{flex-direction:column;align-items:flex-start;}
+    textarea{width:140px;height:55px;}
+    table{font-size:11px;}
 }
 </style>
 </head>
@@ -181,8 +147,9 @@ textarea {
         <input type="month" id="bulan">
     </div>
 
-    <div style="align-self:flex-end;">
+    <div>
         <button onclick="loadData()">Filter</button>
+        <button onclick="exportExcel()">Export Excel</button>
     </div>
 </div>
 
@@ -208,6 +175,9 @@ textarea {
 
 </div>
 
+<!-- Library Excel -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -224,10 +194,8 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-</script>
 
-<script>
-// ======= Render Data ke Tabel =======
+// ===== Render Data =====
 const tableBody = document.getElementById('data-table');
 
 function renderRow(docData, docId){
@@ -262,8 +230,9 @@ function renderRow(docData, docId){
     tableBody.appendChild(tr);
 }
 
-// ======= Load Data Realtime =======
+// ===== Load Data =====
 let unsubscribe = null;
+
 function loadData(){
     const cari = document.getElementById('cari').value.toLowerCase();
     const bulan = document.getElementById('bulan').value;
@@ -297,7 +266,7 @@ function loadData(){
     });
 }
 
-// ======= Auto Save Catatan =======
+// ===== Auto Save =====
 function aktifkanAutoSave(){
     document.querySelectorAll('.catatan-admin').forEach(textarea=>{
         let timeout = null;
@@ -317,7 +286,7 @@ function aktifkanAutoSave(){
     });
 }
 
-// ======= Hapus =======
+// ===== Hapus =====
 function aktifkanHapus(){
     document.querySelectorAll('.btn-hapus').forEach(btn=>{
         btn.onclick = ()=>{
@@ -329,8 +298,41 @@ function aktifkanHapus(){
     });
 }
 
+// ===== Export Excel =====
+function exportExcel(){
+    let dataExport = [];
+    const rows = document.querySelectorAll("#data-table tr");
+
+    rows.forEach(row=>{
+        const cells = row.querySelectorAll("td");
+        if(cells.length>0){
+            dataExport.push({
+                Jenis: cells[0].innerText,
+                Nama: cells[1].innerText,
+                Departement: cells[2].innerText,
+                Plat: cells[3].innerText,
+                Kendaraan: cells[4].innerText,
+                Periode: cells[5].innerText,
+                Keterangan: cells[6].innerText,
+                Status: cells[7].innerText,
+                Catatan_Admin: row.querySelector("textarea")?.value || ""
+            });
+        }
+    });
+
+    if(dataExport.length===0){
+        alert("Tidak ada data untuk di export");
+        return;
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(dataExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Data Pengajuan");
+    XLSX.writeFile(workbook, "Data_Pengajuan.xlsx");
+}
+
 loadData();
-setInterval(loadData, 10000);
+setInterval(loadData,10000);
 </script>
 
 </body>

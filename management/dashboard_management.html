@@ -20,6 +20,7 @@ form button{background:#4e54c8;color:#fff;font-weight:bold;border:none;cursor:po
 .nopol-group{display:flex;gap:5px;margin-bottom:5px}
 .nopol-group input{flex:1}
 .nopol-group button{width:35px;background:red;color:#fff;border:none;border-radius:6px}
+.table-wrapper{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;margin-top:15px;background:#fff;font-size:13px}
 th,td{border:1px solid #ccc;padding:6px;text-align:center}
 th{background:#4e54c8;color:#fff}
@@ -30,6 +31,8 @@ position:fixed;top:20px;left:50%;transform:translateX(-50%);
 background:#16a34a;color:#fff;padding:12px 20px;border-radius:8px;
 box-shadow:0 4px 10px rgba(0,0,0,0.2);display:none;z-index:999;
 }
+.filter-area{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;align-items:flex-end;}
+.filter-area select,.filter-area input,.filter-area button{padding:6px;border-radius:6px;border:1px solid #ccc;font-size:13px;}
 </style>
 </head>
 <body>
@@ -49,7 +52,6 @@ box-shadow:0 4px 10px rgba(0,0,0,0.2);display:none;z-index:999;
 <!-- PENGAJUAN -->
 <div class="tab" id="pengajuan">
 <form id="formPengajuan" autocomplete="off">
-
 <select name="jenis_pengajuan" required>
 <option value="">-- Pilih Jenis --</option>
 <option value="Free Parkir">Free Parkir</option>
@@ -69,12 +71,27 @@ box-shadow:0 4px 10px rgba(0,0,0,0.2);display:none;z-index:999;
 <textarea name="keterangan" placeholder="Keterangan"></textarea>
 
 <button type="submit" id="btnKirim">Kirim</button>
-
 </form>
 </div>
 
 <!-- RIWAYAT -->
 <div class="tab" id="riwayat" style="display:none">
+
+<div class="filter-area">
+<select id="filterJenis">
+<option value="">-- Semua Jenis --</option>
+<option value="Free Parkir">Free Parkir</option>
+<option value="Compliment">Compliment</option>
+<option value="Ubah Plat">Ubah Plat</option>
+</select>
+
+<input type="month" id="filterBulan">
+
+<button id="btnFilter">Filter</button>
+<button id="btnExport">Export Excel</button>
+</div>
+
+<div class="table-wrapper">
 <table>
 <thead>
 <tr>
@@ -84,11 +101,13 @@ box-shadow:0 4px 10px rgba(0,0,0,0.2);display:none;z-index:999;
 <th>Plat</th>
 <th>Kendaraan</th>
 <th>Periode</th>
-<th>Status</th>
+<th>Keterangan</th>
+<th>Status Admin</th>
 </tr>
 </thead>
 <tbody id="riwayatData"></tbody>
 </table>
+</div>
 </div>
 
 <div class="tab" id="ganti" style="display:none">
@@ -105,14 +124,15 @@ box-shadow:0 4px 10px rgba(0,0,0,0.2);display:none;z-index:999;
 
 </section>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyCaPM6CNaiK-VZYR0-dkrrYMANiWi8pUGw",
-  authDomain: "memodigital-57c0c.firebaseapp.com",
-  projectId: "memodigital-57c0c",
+  apiKey: "API_KEY_KAMU",
+  authDomain: "AUTH_DOMAIN_KAMU",
+  projectId: "PROJECT_ID_KAMU",
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
@@ -139,10 +159,7 @@ if(document.querySelectorAll('[name="nomor_plat[]"]').length>1)div.remove();
 };
 return div;
 }
-function resetNopol(){
-nopolContainer.innerHTML="";
-nopolContainer.appendChild(createNopol());
-}
+function resetNopol(){ nopolContainer.innerHTML=""; nopolContainer.appendChild(createNopol()); }
 resetNopol();
 document.getElementById("addNopol").onclick=()=>nopolContainer.appendChild(createNopol());
 
@@ -154,14 +171,12 @@ btn.disabled=true;
 
 const formData=new FormData(this);
 let nomor_plat=[];
-document.querySelectorAll('[name="nomor_plat[]"]').forEach(i=>{
-if(i.value.trim()!=="")nomor_plat.push(i.value.trim());
-});
+document.querySelectorAll('[name="nomor_plat[]"]').forEach(i=>{ if(i.value.trim()!=="") nomor_plat.push(i.value.trim()); });
 if(nomor_plat.length===0){btn.disabled=false;return;}
 
 await db.collection("pengajuan").add({
 ...Object.fromEntries(formData.entries()),
-nomor_plat: nomor_plat,
+nomor_plat,
 status_admin:"Belum",
 timestamp:firebase.firestore.FieldValue.serverTimestamp()
 });
@@ -178,14 +193,20 @@ btn.disabled=false;
 });
 
 /* RIWAYAT */
-db.collection("pengajuan")
-.orderBy("timestamp","desc")
-.onSnapshot(snapshot=>{
+let allData = [];
+
+function renderTable(data){
 const tbody=document.getElementById("riwayatData");
 tbody.innerHTML="";
 
-snapshot.forEach(doc=>{
+const filterJenis=document.getElementById("filterJenis").value;
+const filterBulan=document.getElementById("filterBulan").value;
+
+data.forEach(doc=>{
 const d=doc.data();
+if(filterJenis && d.jenis_pengajuan!==filterJenis) return;
+if(filterBulan && d.periode_awal.substring(0,7)!==filterBulan) return;
+
 const daftarPlat=Array.isArray(d.nomor_plat)?d.nomor_plat:[d.nomor_plat];
 
 daftarPlat.forEach(plat=>{
@@ -197,16 +218,46 @@ tbody.innerHTML+=`
 <td>${plat||""}</td>
 <td>${d.jenis_kendaraan||""}</td>
 <td>${d.periode_awal||""} s/d ${d.periode_akhir||""}</td>
-<td>
-${d.status_admin==="Sudah"
-?'<span class="status-sudah">Sudah</span>'
-:'<span class="status-baru">Belum</span>'}
-</td>
+<td>${d.keterangan||""}</td>
+<td>${d.status_admin==="Sudah"?'<span class="status-sudah">Sudah</span>':'<span class="status-baru">Belum</span>'}</td>
 </tr>`;
 });
 });
-});
-</script>
+}
 
+db.collection("pengajuan").orderBy("timestamp","desc").onSnapshot(snapshot=>{
+allData=snapshot.docs;
+renderTable(allData);
+});
+
+/* FILTER */
+document.getElementById("btnFilter").onclick=()=>renderTable(allData);
+
+/* EXPORT EXCEL */
+document.getElementById("btnExport").onclick=()=>{
+const rows=[];
+allData.forEach(doc=>{
+const d=doc.data();
+const daftarPlat=Array.isArray(d.nomor_plat)?d.nomor_plat:[d.nomor_plat];
+daftarPlat.forEach(plat=>{
+rows.push({
+Jenis:d.jenis_pengajuan||"",
+Nama:d.nama||"",
+Departement:d.departement||"",
+Plat:plat||"",
+Kendaraan:d.jenis_kendaraan||"",
+Periode:d.periode_awal+" s/d "+d.periode_akhir||"",
+Keterangan:d.keterangan||"",
+Status:d.status_admin||""
+});
+});
+});
+if(rows.length===0){ alert("Tidak ada data"); return; }
+const ws=XLSX.utils.json_to_sheet(rows);
+const wb=XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(wb,ws,"Data");
+XLSX.writeFile(wb,"Data_Pengajuan.xlsx");
+};
+</script>
 </body>
 </html>

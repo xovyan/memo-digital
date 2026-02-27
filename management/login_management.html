@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login Management</title>
 <style>
-body{font-family:Arial;background:#f4f6f9;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;}
-.login-box{background:#fff;padding:20px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.1);width:300px;}
-.login-box h2{text-align:center;margin-bottom:20px;color:#4e54c8;}
-.login-box input{width:100%;padding:10px;margin-bottom:10px;border-radius:6px;border:1px solid #ccc;}
-.login-box button{width:100%;padding:10px;background:#4e54c8;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:bold;}
-#msg{color:red;font-size:13px;text-align:center;}
+body{font-family:Arial;background:#f4f6f9;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+.login-box{background:white;padding:30px;border-radius:10px;box-shadow:0 4px 15px rgba(0,0,0,0.1);width:320px;text-align:center}
+.login-box h2{margin-bottom:20px;color:#4e54c8}
+.login-box input{width:100%;padding:10px;margin:8px 0;border:1px solid #ccc;border-radius:6px}
+.login-box button{width:100%;padding:10px;margin-top:10px;background:#4e54c8;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:bold}
+#msg{color:red;margin-top:10px;font-size:14px}
 </style>
 </head>
 <body>
@@ -20,7 +20,7 @@ body{font-family:Arial;background:#f4f6f9;display:flex;justify-content:center;al
 <input type="text" id="username" placeholder="Username">
 <input type="password" id="password" placeholder="Password">
 <button id="btnLogin">Login</button>
-<p id="msg"></p>
+<div id="msg"></div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -36,25 +36,40 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 document.getElementById('btnLogin').onclick = async ()=>{
-  const username = document.getElementById('username').value.trim();
-  const password = document.getElementById('password').value.trim();
+  const usernameInput = document.getElementById('username').value.trim();
+  const passwordInput = document.getElementById('password').value.trim();
   const msg = document.getElementById('msg');
   msg.textContent = "";
 
-  if(!username || !password){ msg.textContent="Isi semua field"; return; }
+  if(!usernameInput || !passwordInput){ msg.textContent="Isi semua field"; return; }
 
   try{
-    const userDoc = await db.collection('users').doc(username).get();
-    if(!userDoc.exists){ msg.textContent="Username tidak ditemukan"; return; }
+    // Cari user berdasarkan field username
+    const querySnapshot = await db.collection('users')
+      .where('username','==',usernameInput)
+      .limit(1)
+      .get();
 
+    if(querySnapshot.empty){
+      msg.textContent = "Username tidak ditemukan";
+      return;
+    }
+
+    const userDoc = querySnapshot.docs[0];
     const data = userDoc.data();
-    if(data.password !== password){ msg.textContent="Password salah"; return; }
+
+    if(data.password !== passwordInput){
+      msg.textContent = "Password salah";
+      return;
+    }
 
     // simpan session
-    sessionStorage.setItem('managementLogin', username);
+    sessionStorage.setItem('managementLogin', data.username);
     sessionStorage.setItem('managementRole', data.role);
 
+    // arahkan ke dashboard
     window.location.href = "dashboard_management.html";
+
   }catch(err){
     console.error(err);
     msg.textContent="Terjadi kesalahan, coba lagi";

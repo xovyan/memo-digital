@@ -5,39 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard Management</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Arial;}
-body{background:#f4f6f9;}
-header{background:#4e54c8;color:#fff;padding:15px;text-align:center;font-size:20px;}
-nav{display:flex;background:#fff;}
-nav button{flex:1;padding:12px;border:none;background:none;font-weight:bold;color:#4e54c8;cursor:pointer;}
-nav button.active{border-bottom:3px solid #4e54c8;}
-section{padding:15px;}
-form input,form select,form textarea,form button{width:100%;margin-bottom:10px;padding:10px;border-radius:8px;border:1px solid #ccc;font-size:14px;}
-form button{background:#4e54c8;color:#fff;font-weight:bold;border:none;cursor:pointer;}
-.nopol-group{display:flex;gap:5px;margin-bottom:5px;align-items:center;}
-.nopol-group input{flex:1;min-width:0;}
-.nopol-group button{background:red;color:#fff;border:none;border-radius:6px;width:30px;height:30px;cursor:pointer;font-size:16px;line-height:1;padding:0;}
-#addNopol{background:#27ae60;padding:6px 12px;font-size:14px;border-radius:6px;margin-top:5px;display:inline-block;}
-table{width:100%;border-collapse:collapse;margin-top:15px;background:#fff;font-size:13px;}
-th,td{border:1px solid #ccc;padding:6px;text-align:center;}
-th{background:#4e54c8;color:#fff;}
-.status-baru{color:red;font-weight:bold;}
-.status-sudah{color:green;font-weight:bold;}
-.popup{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#16a34a;color:#fff;padding:12px 20px;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,0.2);display:none;z-index:999;}
-.filter-area{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
-.filter-area input, .filter-area select, .filter-area button{padding:6px 10px;font-size:13px;border-radius:6px;border:1px solid #ccc;}
-.total-belum{margin-top:10px;font-weight:bold;font-size:14px;}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
+body{background:#f4f6f9}
+header{background:#4e54c8;color:#fff;padding:15px;text-align:center;font-size:20px}
+nav{display:flex;background:#fff}
+nav button{flex:1;padding:12px;border:none;background:none;font-weight:bold;color:#4e54c8;cursor:pointer}
+nav button.active{border-bottom:3px solid #4e54c8}
+section{padding:15px}
+form input,form select,form textarea,form button{
+  width:100%;margin-bottom:10px;padding:10px;border-radius:8px;border:1px solid #ccc;font-size:14px
+}
+form button{background:#4e54c8;color:#fff;font-weight:bold;border:none;cursor:pointer}
+.nopol-group{display:flex;gap:5px;margin-bottom:5px;align-items:center}
+.nopol-group input{flex:1;min-width:0}
+.nopol-group button{background:red;color:#fff;border:none;border-radius:6px;width:30px;height:30px;cursor:pointer;font-size:16px;line-height:1;padding:0}
+#addNopol{background:#27ae60;padding:6px 12px;font-size:14px;border-radius:6px;margin-top:5px;display:inline-block}
+table{width:100%;border-collapse:collapse;margin-top:15px;background:#fff;font-size:13px}
+th,td{border:1px solid #ccc;padding:6px;text-align:center}
+th{background:#4e54c8;color:#fff}
+.status-baru{color:red;font-weight:bold}
+.status-sudah{color:green;font-weight:bold}
+.popup{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#16a34a;color:#fff;padding:12px 20px;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,0.2);display:none;z-index:999}
+.filter-area{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.filter-area input, .filter-area select, .filter-area button{padding:6px 10px;font-size:13px;border-radius:6px;border:1px solid #ccc}
+.total-belum{margin-top:10px;font-weight:bold;font-size:14px}
 </style>
 </head>
 <body>
-
-<script>
-// ✅ Proteksi halaman: harus login dulu
-if(!localStorage.getItem('managementUser')){
-    alert('Silakan login terlebih dahulu');
-    window.location.href = 'login_management.html';
-}
-</script>
 
 <header>Dashboard Management</header>
 <div class="popup" id="popup">Data berhasil dikirim ✅</div>
@@ -78,6 +72,7 @@ if(!localStorage.getItem('managementUser')){
 
 <!-- RIWAYAT -->
 <div class="tab" id="riwayat" style="display:none">
+
 <div class="filter-area">
 <input type="text" id="cariFilter" placeholder="Cari Nama/Dept/Plat/Status">
 <input type="month" id="bulanFilter">
@@ -104,11 +99,10 @@ if(!localStorage.getItem('managementUser')){
 </table>
 </div>
 
-<!-- GANTI PASSWORD -->
 <div class="tab" id="ganti" style="display:none">
-<form id="formGanti">
-<input type="password" id="passLama" placeholder="Password Lama" required>
-<input type="password" id="passBaru" placeholder="Password Baru" required>
+<form id="formGantiPassword">
+<input type="password" id="oldPassword" placeholder="Password Lama">
+<input type="password" id="newPassword" placeholder="Password Baru">
 <button type="submit">Ganti Password</button>
 </form>
 </div>
@@ -124,6 +118,18 @@ if(!localStorage.getItem('managementUser')){
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <script>
+// Proteksi login
+if(!sessionStorage.getItem('managementLogin')){
+    alert('Silahkan login terlebih dahulu');
+    window.location.href = 'login_management.html';
+}
+
+// Logout
+document.getElementById('btnLogout').addEventListener('click', ()=>{
+    sessionStorage.removeItem('managementLogin');
+    window.location.href='login_management.html';
+});
+
 const firebaseConfig = {
   apiKey: "AIzaSyCaPM6CNaiK-VZYR0-dkrrYMANiWi8pUGw",
   authDomain: "memodigital-57c0c.firebaseapp.com",
@@ -141,12 +147,6 @@ document.querySelectorAll(".tab").forEach(t=>t.style.display="none");
 document.getElementById(btn.dataset.tab).style.display="block";
 };
 });
-
-/* Logout */
-document.getElementById("btnLogout").onclick=()=>{
-localStorage.removeItem("managementUser");
-window.location.href = "login_management.html";
-};
 
 /* NOPOL */
 const nopolContainer=document.getElementById("nopolContainer");
@@ -190,8 +190,9 @@ timestamp:firebase.firestore.FieldValue.serverTimestamp()
 this.reset();
 resetNopol();
 window.scrollTo({top:0,behavior:"smooth"});
-document.getElementById("popup").style.display="block";
-setTimeout(()=>document.getElementById("popup").style.display="none",2000);
+const popup=document.getElementById("popup");
+popup.style.display="block";
+setTimeout(()=>popup.style.display="none",2000);
 btn.disabled=false;
 });
 
@@ -201,7 +202,7 @@ function loadRiwayat(){
 const cari=document.getElementById("cariFilter").value.toLowerCase();
 const bulan=document.getElementById("bulanFilter").value;
 
-if(riwayatSnapshot) riwayatSnapshot(); // stop snapshot lama
+if(riwayatSnapshot) riwayatSnapshot();
 
 riwayatSnapshot=db.collection("pengajuan").orderBy("timestamp","desc")
 .onSnapshot(snapshot=>{
@@ -219,7 +220,7 @@ let awalBln=d.periode_awal?.substring(0,7) || "";
 daftarPlat.forEach((plat,index)=>{
 let match=true;
 if(cari){
-  match = [d.nama,d.departement,plat,statusPlat[index]].some(v=>String(v).toLowerCase().includes(cari));
+  match = [d.nama,d.departement,plat,statusPlat[index]].some(v=>String(v).toLowerCase().includes(cari));
 }
 if(bulan && bulan!==awalBln) match=false;
 
@@ -273,24 +274,25 @@ XLSX.writeFile(workbook,"Riwayat_Pengajuan.xlsx");
 }
 
 /* GANTI PASSWORD */
-document.getElementById("formGanti").addEventListener("submit", async function(e){
-    e.preventDefault();
-    const username = localStorage.getItem("managementUser");
-    const passLama = document.getElementById("passLama").value.trim();
-    const passBaru = document.getElementById("passBaru").value.trim();
+document.getElementById("formGantiPassword").addEventListener("submit",async function(e){
+e.preventDefault();
+const oldPass=document.getElementById("oldPassword").value;
+const newPass=document.getElementById("newPassword").value;
+const username=sessionStorage.getItem('managementLogin');
+if(!oldPass || !newPass){alert('Harap isi kedua password');return;}
 
-    if(!username || !passLama || !passBaru){ alert("Lengkapi semua field"); return; }
-
-    const doc = await db.collection("users").doc(username).get();
-    if(!doc.exists || doc.data().password !== passLama){
-        alert("Password lama salah");
-        return;
-    }
-
-    await db.collection("users").doc(username).update({password: passBaru});
-    alert("Password berhasil diganti");
-    this.reset();
+// Cari user di Firestore
+db.collection('users').where('username','==',username).where('role','==','management')
+.get().then(snapshot=>{
+    if(snapshot.empty){alert('User tidak ditemukan');return;}
+    snapshot.forEach(doc=>{
+        const data=doc.data();
+        if(data.password!==oldPass){alert('Password lama salah');return;}
+        doc.ref.update({password:newPass}).then(()=>alert('Password berhasil diubah'));
+    });
+});
 });
 </script>
+
 </body>
 </html>

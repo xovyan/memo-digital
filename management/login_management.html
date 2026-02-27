@@ -5,26 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login Management</title>
 <style>
-body{font-family:Arial; background:#f4f6f9; display:flex; justify-content:center; align-items:center; height:100vh;}
-.login-box{background:white;padding:30px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);width:320px;}
-.login-box h2{text-align:center;margin-bottom:20px;color:#4e54c8;}
-.login-box input{width:100%;padding:10px;margin-bottom:15px;border-radius:6px;border:1px solid #ccc;font-size:14px;}
-.login-box button{width:100%;padding:10px;background:#4e54c8;color:white;border:none;border-radius:6px;font-weight:bold;cursor:pointer;}
+body{font-family:Arial;background:#f4f6f9;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
+.login-box{background:white;padding:30px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1);width:300px;text-align:center}
+.login-box h2{margin-bottom:20px;color:#4e54c8}
+.login-box input{width:100%;padding:10px;margin:10px 0;border-radius:6px;border:1px solid #ccc;font-size:14px}
+.login-box button{width:100%;padding:10px;background:#4e54c8;color:white;border:none;border-radius:6px;font-size:16px;cursor:pointer}
+.login-box button:disabled{opacity:0.6;cursor:not-allowed}
 </style>
 </head>
 <body>
 
 <div class="login-box">
 <h2>Login Management</h2>
-<form id="loginForm">
-<input type="text" id="username" placeholder="Username" required>
-<input type="password" id="password" placeholder="Password" required>
-<button type="submit">Login</button>
-</form>
+<input type="text" id="username" placeholder="Username">
+<input type="password" id="password" placeholder="Password">
+<button id="btnLogin">Login</button>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyCaPM6CNaiK-VZYR0-dkrrYMANiWi8pUGw",
@@ -34,30 +34,39 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-document.getElementById("loginForm").addEventListener("submit", async function(e){
-    e.preventDefault();
+document.getElementById("btnLogin").onclick = async ()=>{
+    const btn = document.getElementById("btnLogin");
+    btn.disabled = true;
+
     const username = document.getElementById("username").value.trim();
-    const password = document.getElementById("password").value.trim();
+    const password = document.getElementById("password").value;
 
-    if(!username || !password){ alert("Masukkan username & password"); return; }
+    if(!username || !password){
+        alert("Isi username dan password");
+        btn.disabled = false;
+        return;
+    }
 
-    try {
-        const doc = await db.collection("users").doc(username).get();
-        if(!doc.exists || doc.data().password !== password){
+    try{
+        // Cek collection 'management' (akun lama)
+        const docSnap = await db.collection("management").doc(username).get();
+        if(!docSnap.exists || docSnap.data().password !== password){
             alert("Username atau password salah");
+            btn.disabled = false;
             return;
         }
 
-        // ✅ Simpan session di localStorage
+        // Simpan session di localStorage
         localStorage.setItem("managementUser", username);
-
         // Redirect ke dashboard
-        window.location.href = "dashboard_management.html";
-    } catch(err){
+        location.href = "dashboard_management.html";
+    }catch(err){
         console.error(err);
-        alert("Terjadi kesalahan saat login");
+        alert("Terjadi kesalahan. Coba lagi.");
     }
-});
+    btn.disabled = false;
+}
 </script>
+
 </body>
 </html>

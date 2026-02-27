@@ -12,7 +12,9 @@ nav{display:flex;background:#fff}
 nav button{flex:1;padding:12px;border:none;background:none;font-weight:bold;color:#4e54c8;cursor:pointer}
 nav button.active{border-bottom:3px solid #4e54c8}
 section{padding:15px}
-form input,form select,form textarea,form button{width:100%;margin-bottom:10px;padding:10px;border-radius:8px;border:1px solid #ccc;font-size:14px}
+form input,form select,form textarea,form button{
+  width:100%;margin-bottom:10px;padding:10px;border-radius:8px;border:1px solid #ccc;font-size:14px
+}
 form button{background:#4e54c8;color:#fff;font-weight:bold;border:none;cursor:pointer}
 .nopol-group{display:flex;gap:5px;margin-bottom:5px;align-items:center}
 .nopol-group input{flex:1;min-width:0}
@@ -70,13 +72,16 @@ th{background:#4e54c8;color:#fff}
 
 <!-- RIWAYAT -->
 <div class="tab" id="riwayat" style="display:none">
+
 <div class="filter-area">
 <input type="text" id="cariFilter" placeholder="Cari Nama/Dept/Plat/Status">
 <input type="month" id="bulanFilter">
 <button onclick="loadRiwayat()">Filter</button>
 <button onclick="exportExcel()">Export Excel</button>
 </div>
+
 <div class="total-belum">Total Belum Input: <span id="totalBelum">0</span></div>
+
 <table>
 <thead>
 <tr>
@@ -97,16 +102,15 @@ th{background:#4e54c8;color:#fff}
 <!-- GANTI PASSWORD -->
 <div class="tab" id="ganti" style="display:none">
 <form id="formGantiPassword">
-<input type="password" id="passwordLama" placeholder="Password Lama" required>
-<input type="password" id="passwordBaru" placeholder="Password Baru" required>
+<input type="password" id="oldPassword" placeholder="Password Lama" required>
+<input type="password" id="newPassword" placeholder="Password Baru" required>
 <button type="submit">Ganti Password</button>
 </form>
-<div id="passMsg" style="margin-top:10px;font-weight:bold;color:green"></div>
 </div>
 
 <!-- LOGOUT -->
 <div class="tab" id="logout" style="display:none">
-<button id="btnLogout">Keluar</button>
+<button onclick="logout()">Keluar</button>
 </div>
 
 </section>
@@ -116,53 +120,68 @@ th{background:#4e54c8;color:#fff}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <script>
-// ======================== SESSION CHECK ========================
-document.addEventListener('DOMContentLoaded', ()=>{
-  const sessionRaw = localStorage.getItem('userSession');
-  let session = null;
-  try{ session = JSON.parse(sessionRaw); } catch(e){ session=null; }
+// ================== FIREBASE ==================
+const firebaseConfig = {
+  apiKey: "AIzaSyCaPM6CNaiK-VZYR0-dkrrYMANiWi8pUGw",
+  authDomain: "memodigital-57c0c.firebaseapp.com",
+  projectId: "memodigital-57c0c",
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-  if(!session || session.role !== "management"){
-    alert("Silahkan login terlebih dahulu!");
+// ================== SESSION CHECK ==================
+async function checkSession() {
+  return new Promise((resolve,reject)=>{
+    try {
+      const sessionRaw = localStorage.getItem('userSession');
+      if(!sessionRaw) return reject("Silahkan login");
+      const session = JSON.parse(sessionRaw);
+      if(!session.username || session.role!=="management") return reject("Session tidak valid");
+      window.userSession = session;
+      resolve(true);
+    } catch(e) {
+      reject("Session corrupt");
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', async ()=>{
+  try {
+    await checkSession();
+  } catch(err) {
+    alert(err);
     localStorage.removeItem('userSession');
     window.location.href="login_management.html";
-    return;
   }
-
-  window.userSession = session; // global access
 });
 
-// ======================== TAB ========================
+// ================== TAB ==================
 document.querySelectorAll(".tab-btn").forEach(btn=>{
-btn.onclick=()=>{
-document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
-btn.classList.add("active");
-document.querySelectorAll(".tab").forEach(t=>t.style.display="none");
-document.getElementById(btn.dataset.tab).style.display="block";
-};
+  btn.onclick=()=>{
+    document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".tab").forEach(t=>t.style.display="none");
+    document.getElementById(btn.dataset.tab).style.display="block";
+  };
 });
 
-// ======================== NOPOL ========================
+// ================== NOPOL ==================
 const nopolContainer=document.getElementById("nopolContainer");
 function createNopol(){
   const div=document.createElement("div");
   div.className="nopol-group";
   div.innerHTML=`<input type="text" name="nomor_plat[]" required>
-                  <button type="button">×</button>`;
+  <button type="button">×</button>`;
   div.querySelector("button").onclick=()=>{
     if(document.querySelectorAll('[name="nomor_plat[]"]').length>1) div.remove();
   };
   return div;
 }
-function resetNopol(){
-  nopolContainer.innerHTML="";
-  nopolContainer.appendChild(createNopol());
-}
+function resetNopol(){ nopolContainer.innerHTML=""; nopolContainer.appendChild(createNopol()); }
 resetNopol();
 document.getElementById("addNopol").onclick=()=>nopolContainer.appendChild(createNopol());
 
-// ======================== SUBMIT PENGAJUAN ========================
-const db = firebase.firestore();
+// ================== SUBMIT PENGAJUAN ==================
 document.getElementById("formPengajuan").addEventListener("submit", async function(e){
   e.preventDefault();
   const btn=document.getElementById("btnKirim");
@@ -170,7 +189,9 @@ document.getElementById("formPengajuan").addEventListener("submit", async functi
 
   const formData=new FormData(this);
   let nomor_plat=[];
-  document.querySelectorAll('[name="nomor_plat[]"]').forEach(i=>{ if(i.value.trim()!=="") nomor_plat.push(i.value.trim()); });
+  document.querySelectorAll('[name="nomor_plat[]"]').forEach(i=>{
+    if(i.value.trim()!=="") nomor_plat.push(i.value.trim());
+  });
   if(nomor_plat.length===0){ btn.disabled=false; return; }
 
   await db.collection("pengajuan").add({
@@ -189,14 +210,16 @@ document.getElementById("formPengajuan").addEventListener("submit", async functi
   btn.disabled=false;
 });
 
-// ======================== LOAD RIWAYAT ========================
+// ================== RIWAYAT ==================
 let riwayatSnapshot=null;
 function loadRiwayat(){
   const cari=document.getElementById("cariFilter").value.toLowerCase();
   const bulan=document.getElementById("bulanFilter").value;
-  if(riwayatSnapshot) riwayatSnapshot();
 
-  riwayatSnapshot=db.collection("pengajuan").orderBy("timestamp","desc").onSnapshot(snapshot=>{
+  if(riwayatSnapshot) riwayatSnapshot(); 
+
+  riwayatSnapshot=db.collection("pengajuan").orderBy("timestamp","desc")
+  .onSnapshot(snapshot=>{
     const tbody=document.getElementById("riwayatData");
     tbody.innerHTML="";
     let totalBelum=0;
@@ -209,23 +232,24 @@ function loadRiwayat(){
 
       daftarPlat.forEach((plat,index)=>{
         let match=true;
-        if(cari) match=[d.nama,d.departement,plat,statusPlat[index]].some(v=>String(v).toLowerCase().includes(cari));
+        if(cari){
+          match=[d.nama,d.departement,plat,statusPlat[index]].some(v=>String(v).toLowerCase().includes(cari));
+        }
         if(bulan && bulan!==awalBln) match=false;
 
         if(match){
           tbody.innerHTML+=`
-<tr>
-<td>${d.jenis_pengajuan||""}</td>
-<td>${d.nama||""}</td>
-<td>${d.departement||""}</td>
-<td>${plat||""}</td>
-<td>${d.jenis_kendaraan||""}</td>
-<td>${d.periode_awal||""} s/d ${d.periode_akhir||""}</td>
-<td>${d.keterangan||""}</td>
-<td>${statusPlat[index]==="Sudah"?'<span class="status-sudah">Sudah</span>':'<span class="status-baru">Belum</span>'}</td>
-</tr>`;
+          <tr>
+          <td>${d.jenis_pengajuan||""}</td>
+          <td>${d.nama||""}</td>
+          <td>${d.departement||""}</td>
+          <td>${plat||""}</td>
+          <td>${d.jenis_kendaraan||""}</td>
+          <td>${d.periode_awal||""} s/d ${d.periode_akhir||""}</td>
+          <td>${d.keterangan||""}</td>
+          <td>${statusPlat[index]==="Sudah"?'<span class="status-sudah">Sudah</span>':'<span class="status-baru">Belum</span>'}</td>
+          </tr>`;
         }
-
         if(statusPlat[index]==="Belum") totalBelum++;
       });
     });
@@ -234,7 +258,7 @@ function loadRiwayat(){
 }
 loadRiwayat();
 
-// ======================== EXPORT EXCEL ========================
+// ================== EXPORT EXCEL ==================
 function exportExcel(){
   let dataExport=[];
   document.querySelectorAll("#riwayatData tr").forEach(row=>{
@@ -259,29 +283,35 @@ function exportExcel(){
   XLSX.writeFile(workbook,"Riwayat_Pengajuan.xlsx");
 }
 
-// ======================== GANTI PASSWORD ========================
+// ================== GANTI PASSWORD ==================
 document.getElementById("formGantiPassword").addEventListener("submit", async function(e){
   e.preventDefault();
-  const lama=document.getElementById("passwordLama").value.trim();
-  const baru=document.getElementById("passwordBaru").value.trim();
-  const msg=document.getElementById("passMsg");
+  const oldPass=document.getElementById("oldPassword").value;
+  const newPass=document.getElementById("newPassword").value;
 
-  const userRef = db.collection("users").doc(window.userSession.id);
-  const doc = await userRef.get();
-  if(!doc.exists){ msg.style.color="red"; msg.textContent="User tidak ditemukan!"; return; }
+  try{
+    const userRef=db.collection("users").doc(window.userSession.username);
+    const docSnap=await userRef.get();
+    if(!docSnap.exists) return alert("User tidak ditemukan");
 
-  if(doc.data().password!==lama){ msg.style.color="red"; msg.textContent="Password lama salah!"; return; }
+    const data=docSnap.data();
+    if(oldPass!==data.password) return alert("Password lama salah");
 
-  await userRef.update({ password:baru });
-  msg.style.color="green"; msg.textContent="Password berhasil diganti!";
-  this.reset();
+    await userRef.update({password:newPass});
+    alert("Password berhasil diganti");
+    this.reset();
+  } catch(err){
+    console.error(err);
+    alert("Gagal ganti password");
+  }
 });
 
-// ======================== LOGOUT ========================
-document.getElementById("btnLogout").addEventListener("click", ()=>{
-  localStorage.removeItem("userSession");
+// ================== LOGOUT ==================
+function logout(){
+  localStorage.removeItem('userSession');
   window.location.href="login_management.html";
-});
+}
 </script>
+
 </body>
 </html>

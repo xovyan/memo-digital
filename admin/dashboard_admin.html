@@ -21,6 +21,7 @@ th{background:#34495e;color:white;padding:12px;text-align:center;position:sticky
 td{padding:10px;text-align:center;border-bottom:1px solid #eee;vertical-align:middle;}
 tr:nth-child(even){background:#f9f9f9;}
 tr:hover{background:#f1f4f9;}
+tr.belum{background:#fff3e0;} /* highlight baris Belum */
 .status-aktif{color:green;font-weight:bold;}
 .status-selesai{color:gray;font-weight:bold;}
 .status-sudah{color:blue;font-weight:bold;}
@@ -95,7 +96,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// Elements
 const tableBody = document.getElementById('data-table');
 const totalAktifEl = document.getElementById('total-aktif');
 const totalBelumEl = document.getElementById('total-belum');
@@ -120,6 +120,8 @@ function renderRow(data, docId, plat, statusAdmin){
     tr.dataset.dept = data.departement || '';
     tr.dataset.plat = plat || '';
     tr.dataset.status = statusAdmin || '';
+
+    if(statusAdmin==="Belum") tr.classList.add('belum'); // highlight baris Belum
 
     tr.innerHTML = `
         <td>${data.jenis_pengajuan||''}</td>

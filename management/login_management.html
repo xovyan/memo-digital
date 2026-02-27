@@ -5,74 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login Management</title>
 <style>
-/* Reset & body */
 * { margin:0; padding:0; box-sizing:border-box; font-family: 'Arial', sans-serif; }
-body {
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    min-height:100vh;
-    background: linear-gradient(135deg, #4e54c8, #8f94fb);
-}
-
-/* Container Login */
-.login-container {
-    width: 90%;
-    max-width: 400px;
-    background:white;
-    border-radius: 15px;
-    padding: 30px 25px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-}
-
-/* Heading */
-.login-container h2 {
-    text-align:center;
-    margin-bottom:25px;
-    color: #4e54c8;
-}
-
-/* Input fields */
-.login-container input[type="text"],
-.login-container input[type="password"] {
-    width:100%;
-    padding:12px 15px;
-    margin:10px 0;
-    border:1px solid #ccc;
-    border-radius:8px;
-    font-size:16px;
-}
-
-/* Button */
-.login-container button {
-    width:100%;
-    padding:12px;
-    margin-top:15px;
-    border:none;
-    border-radius:8px;
-    background:#4e54c8;
-    color:white;
-    font-size:16px;
-    font-weight:bold;
-    cursor:pointer;
-    transition:0.3s;
-}
-.login-container button:hover {
-    background:#3b3f9a;
-}
-
-/* Lupa password / link */
-.login-container .link {
-    display:block;
-    margin-top:15px;
-    text-align:center;
-    color:#4e54c8;
-    text-decoration:none;
-    font-size:14px;
-}
-.login-container .link:hover {
-    text-decoration:underline;
-}
+body { display:flex; justify-content:center; align-items:center; min-height:100vh; background: linear-gradient(135deg, #4e54c8, #8f94fb); }
+.login-container { width: 90%; max-width: 400px; background:white; border-radius: 15px; padding: 30px 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+.login-container h2 { text-align:center; margin-bottom:25px; color: #4e54c8; }
+.login-container input[type="text"], .login-container input[type="password"] { width:100%; padding:12px 15px; margin:10px 0; border:1px solid #ccc; border-radius:8px; font-size:16px; }
+.login-container button { width:100%; padding:12px; margin-top:15px; border:none; border-radius:8px; background:#4e54c8; color:white; font-size:16px; font-weight:bold; cursor:pointer; transition:0.3s; }
+.login-container button:hover { background:#3b3f9a; }
+.login-container .link { display:block; margin-top:15px; text-align:center; color:#4e54c8; text-decoration:none; font-size:14px; }
+.login-container .link:hover { text-decoration:underline; }
 </style>
 </head>
 <body>
@@ -87,19 +28,62 @@ body {
     </form>
 </div>
 
-<script>
-// Simulasi login (gunakan Firebase nanti)
-document.getElementById('loginForm').addEventListener('submit', function(e){
-    e.preventDefault();
-    const username = this.username.value;
-    const password = this.password.value;
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-    // Contoh hardcode login sementara
-    if(username === "management" && password === "242526"){
+<script>
+// ===== Firebase config =====
+const firebaseConfig = {
+  apiKey: "AIzaSyCaPM6CNaiK-VZYR0-dkrrYMANiWi8pUGw",
+  authDomain: "memodigital-57c0c.firebaseapp.com",
+  projectId: "memodigital-57c0c",
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ===== LOGIN =====
+document.getElementById('loginForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const usernameInput = this.username.value.trim();
+    const passwordInput = this.password.value.trim();
+
+    if(!usernameInput || !passwordInput){ alert("Isi semua field"); return; }
+
+    try{
+        const querySnapshot = await db.collection("users").where("username", "==", usernameInput).get();
+
+        if(querySnapshot.empty){
+            alert("Username tidak ditemukan!");
+            return;
+        }
+
+        // Ambil dokumen pertama yang cocok
+        const doc = querySnapshot.docs[0];
+        const data = doc.data();
+
+        if(data.password !== passwordInput){
+            alert("Password salah!");
+            return;
+        }
+
+        // Login sukses → simpan session
+        sessionStorage.setItem("username", usernameInput);
+        sessionStorage.setItem("role", data.role);
+
         alert("Login berhasil!");
-        window.location.href = "dashboard_management.html"; // pindah ke dashboard
-    } else {
-        alert("Username atau Password salah");
+
+        // Redirect sesuai role
+        if(data.role === "management"){
+            window.location.href = "dashboard_management.html";
+        } else if(data.role === "admin"){
+            window.location.href = "dashboard_admin.html";
+        } else {
+            alert("Role tidak dikenali!");
+        }
+
+    } catch(err){
+        console.error(err);
+        alert("Terjadi kesalahan, coba lagi!");
     }
 });
 </script>

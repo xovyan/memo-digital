@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin - Free Parkir</title>
-
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif;}
 body{background:#f1f4f9;}
@@ -25,12 +24,8 @@ td{padding:10px;text-align:center;border-bottom:1px solid #eee;vertical-align:mi
 .btn-sudah{background:#27ae60;color:white;}
 .btn-hapus{background:#e74c3c;color:white;}
 .btn-export{background:#2980b9;color:white;}
-/* Warna baris berdasarkan status admin */
-tr.status-belum{background:#fdecea;}  /* soft merah untuk Belum */
-tr.status-sudah{background:#eafaf1;}  /* soft hijau untuk Sudah */
 </style>
 </head>
-
 <body>
 
 <h2>KELOLA ADMIN</h2>
@@ -109,7 +104,7 @@ function renderRow(data, docId, plat, statusAdmin){
     let statusText="-";
     if(today>=awal && today<=akhir){
         statusText="<span class='status-aktif'>Aktif</span>";
-    } else if(today>akhir){
+    }else if(today>akhir){
         statusText="<span class='status-selesai'>Selesai</span>";
     }
 
@@ -118,9 +113,6 @@ function renderRow(data, docId, plat, statusAdmin){
     tr.dataset.dept = data.departement || '';
     tr.dataset.plat = plat || '';
     tr.dataset.status = statusAdmin || '';
-
-    // Tambahkan class warna berdasarkan status admin
-    tr.className = statusAdmin === "Sudah" ? "status-sudah" : "status-belum";
 
     tr.innerHTML = `
         <td>${data.jenis_pengajuan||''}</td>
@@ -134,7 +126,7 @@ function renderRow(data, docId, plat, statusAdmin){
         <td>${statusAdmin==="Sudah"?'<span class="status-sudah">Sudah</span>':'Belum'}</td>
         <td>
             ${statusAdmin==="Sudah" ? "" : `<button class="btn btn-sudah" onclick="tandaiSudah('${docId}','${plat}')">Sudah Input</button>`}
-            <button class="btn btn-hapus" onclick="hapusData('${docId}')">Hapus</button>
+            <button class="btn btn-hapus" onclick="hapusPlat('${docId}','${plat}')">Hapus</button>
         </td>
     `;
     tableBody.appendChild(tr);
@@ -146,20 +138,34 @@ function tandaiSudah(docId, plat){
         let d = doc.data();
         let platArray = Array.isArray(d.nomor_plat)?d.nomor_plat:[d.nomor_plat];
         let statusArray = Array.isArray(d.status_admin_per_plat)?d.status_admin_per_plat:platArray.map(p=>"Belum");
-
         const index = platArray.indexOf(plat);
         if(index>=0) statusArray[index]="Sudah";
-
         db.collection("pengajuan").doc(docId).update({
-            status_admin_per_plat: statusArray,
+            status_admin_per_plat: statusArray
         });
     });
 }
 
-function hapusData(id){
-    if(confirm("Yakin hapus data?")){
-        db.collection("pengajuan").doc(id).delete();
-    }
+function hapusPlat(docId, plat){
+    db.collection("pengajuan").doc(docId).get().then(doc=>{
+        if(!doc.exists) return;
+        let d = doc.data();
+        let platArray = Array.isArray(d.nomor_plat)?d.nomor_plat:[d.nomor_plat];
+        let statusArray = Array.isArray(d.status_admin_per_plat)?d.status_admin_per_plat:platArray.map(p=>"Belum");
+        const index = platArray.indexOf(plat);
+        if(index>=0){
+            platArray.splice(index,1);
+            statusArray.splice(index,1);
+        }
+        if(platArray.length===0){
+            db.collection("pengajuan").doc(docId).delete();
+        } else {
+            db.collection("pengajuan").doc(docId).update({
+                nomor_plat: platArray,
+                status_admin_per_plat: statusArray
+            });
+        }
+    });
 }
 
 function loadData(){

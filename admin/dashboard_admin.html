@@ -3,61 +3,60 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin - Free Parkir</title>
+<title>Dashboard Admin</title>
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif;}
-body{background:#f1f4f9;min-height:100vh;}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;}
+body{background:#f4f6f9;}
 
 h2{
-    text-align:center;
-    padding:20px 0;
-    background:#2c3e50;
-    color:white;
+  background:#2c3e50;
+  color:white;
+  text-align:center;
+  padding:15px;
 }
 
 .container{
-    width:95%;
-    max-width:1200px;
-    margin:20px auto;
-    background:white;
-    padding:20px;
-    border-radius:12px;
-    box-shadow:0 4px 15px rgba(0,0,0,0.05);
+  width:95%;
+  max-width:1200px;
+  margin:20px auto;
+  background:white;
+  padding:20px;
+  border-radius:10px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.05);
 }
 
-.summary-box{
-    background:#eafaf1;
-    border:2px solid #2ecc71;
-    padding:15px;
-    border-radius:10px;
-    margin-bottom:20px;
-    text-align:center;
-    font-size:18px;
-    font-weight:bold;
-    color:#27ae60;
+.summary{
+  background:#eafaf1;
+  border:2px solid #2ecc71;
+  padding:15px;
+  border-radius:8px;
+  margin-bottom:20px;
+  text-align:center;
+  font-weight:bold;
+  color:#27ae60;
+  font-size:18px;
 }
 
 .table-wrapper{overflow-x:auto;}
 
 table{
-    width:100%;
-    border-collapse:collapse;
-    font-size:13px;
-    min-width:1000px;
+  width:100%;
+  border-collapse:collapse;
+  min-width:1000px;
+  font-size:13px;
 }
 
 th{
-    background:#34495e;
-    color:white;
-    padding:12px;
-    text-align:center;
+  background:#34495e;
+  color:white;
+  padding:10px;
 }
 
 td{
-    padding:10px;
-    text-align:center;
-    border-bottom:1px solid #eee;
+  padding:8px;
+  text-align:center;
+  border-bottom:1px solid #eee;
 }
 
 .status-aktif{color:green;font-weight:bold;}
@@ -65,32 +64,31 @@ td{
 .status-sudah{color:blue;font-weight:bold;}
 
 textarea{
-    width:160px;
-    height:60px;
+  width:140px;
+  height:60px;
 }
 
-.btn{
-    padding:6px 12px;
-    border-radius:6px;
-    border:none;
-    cursor:pointer;
-    font-size:12px;
+button{
+  padding:6px 10px;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+  font-size:12px;
 }
 
-.btn-hapus{background:#e74c3c;color:white;}
 .btn-sudah{background:#27ae60;color:white;}
+.btn-hapus{background:#e74c3c;color:white;}
 </style>
 </head>
 
 <body>
 
-<h2>KELOLA ADMIN</h2>
+<h2>DASHBOARD ADMIN</h2>
 
 <div class="container">
 
-<div class="summary-box">
-TOTAL PARKIR AKTIF SAAT INI :
-<span id="total-aktif">0</span>
+<div class="summary">
+TOTAL PARKIR AKTIF : <span id="totalAktif">0</span>
 </div>
 
 <div class="table-wrapper">
@@ -105,11 +103,10 @@ TOTAL PARKIR AKTIF SAAT INI :
 <th>Periode</th>
 <th>Status</th>
 <th>Status Admin</th>
-<th>Catatan</th>
 <th>Aksi</th>
 </tr>
 </thead>
-<tbody id="data-table"></tbody>
+<tbody id="tableBody"></tbody>
 </table>
 </div>
 
@@ -120,96 +117,105 @@ TOTAL PARKIR AKTIF SAAT INI :
 
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyCaPM6CNaiK-VZYR0-dkrrYMANiWi8pUGw",
-  authDomain: "memodigital-57c0c.firebaseapp.com",
-  projectId: "memodigital-57c0c",
+  apiKey: "ISI_APIKEY_KAMU",
+  authDomain: "ISI_AUTHDOMAIN_KAMU",
+  projectId: "ISI_PROJECTID_KAMU",
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-const tableBody = document.getElementById('data-table');
-const totalAktifEl = document.getElementById('total-aktif');
+const tableBody = document.getElementById("tableBody");
+const totalAktifEl = document.getElementById("totalAktif");
 
-db.collection('pengajuan')
-.orderBy('timestamp','desc')
-.onSnapshot(snapshot=>{
+db.collection("pengajuan")
+.onSnapshot(snapshot => {
 
-    tableBody.innerHTML='';
-    let totalAktif=0;
-    const today=new Date();
+  tableBody.innerHTML = "";
+  let totalAktif = 0;
+  const today = new Date();
 
-    snapshot.forEach(doc=>{
-        const d=doc.data();
+  if(snapshot.empty){
+    tableBody.innerHTML = "<tr><td colspan='9'>Belum ada data</td></tr>";
+    totalAktifEl.textContent = 0;
+    return;
+  }
 
-        // SPLIT PLAT JIKA ADA KOMA
-        let daftarPlat = [];
-        if(d.nomor_plat){
-            daftarPlat = d.nomor_plat.split(',').map(p=>p.trim());
+  snapshot.forEach(doc => {
+
+    const d = doc.data();
+
+    let daftarPlat = ["-"];
+    if(d.nomor_plat && d.nomor_plat !== ""){
+      daftarPlat = d.nomor_plat.split(",").map(p => p.trim());
+    }
+
+    const awal = new Date(d.periode_awal);
+    const akhir = new Date(d.periode_akhir);
+
+    let aktifSudahDihitung = false;
+
+    daftarPlat.forEach(plat => {
+
+      let statusText = "-";
+
+      if(today >= awal && today <= akhir){
+        statusText = "<span class='status-aktif'>Aktif</span>";
+        if(!aktifSudahDihitung){
+          totalAktif++;
+          aktifSudahDihitung = true;
         }
+      }
+      else if(today > akhir){
+        statusText = "<span class='status-selesai'>Selesai</span>";
+      }
 
-        daftarPlat.forEach(plat=>{
+      let statusAdminText = d.status_admin === "Sudah"
+        ? "<span class='status-sudah'>Sudah</span>"
+        : "-";
 
-            const awal=new Date(d.periode_awal);
-            const akhir=new Date(d.periode_akhir);
+      const tr = document.createElement("tr");
 
-            let statusText="-";
-            if(today>=awal && today<=akhir){
-                statusText="<span class='status-aktif'>Aktif</span>";
-                totalAktif++;
-            }
-            else if(today>akhir){
-                statusText="<span class='status-selesai'>Selesai</span>";
-            }
+      tr.innerHTML = `
+        <td>${d.jenis_pengajuan || "-"}</td>
+        <td>${d.nama || "-"}</td>
+        <td>${d.departement || "-"}</td>
+        <td>${plat}</td>
+        <td>${d.jenis_kendaraan || "-"}</td>
+        <td>${d.periode_awal || "-"} s/d ${d.periode_akhir || "-"}</td>
+        <td>${statusText}</td>
+        <td>${statusAdminText}</td>
+        <td>
+          ${
+            d.status_admin === "Sudah"
+            ? ""
+            : `<button class="btn-sudah" onclick="tandaiSudah('${doc.id}')">Sudah Diinput</button>`
+          }
+          <button class="btn-hapus" onclick="hapusData('${doc.id}')">Hapus</button>
+        </td>
+      `;
 
-            let statusAdminText = d.status_admin==="Sudah"
-                ? "<span class='status-sudah'>Sudah</span>"
-                : "-";
+      tableBody.appendChild(tr);
 
-            const tr=document.createElement('tr');
-
-            tr.innerHTML=`
-                <td>${d.jenis_pengajuan}</td>
-                <td>${d.nama}</td>
-                <td>${d.departement}</td>
-                <td>${plat}</td>
-                <td>${d.jenis_kendaraan||''}</td>
-                <td>${d.periode_awal} s/d ${d.periode_akhir}</td>
-                <td>${statusText}</td>
-                <td>${statusAdminText}</td>
-                <td>
-                    <textarea data-id="${doc.id}">${d.catatan_admin||''}</textarea>
-                </td>
-                <td>
-                    ${
-                        d.status_admin==="Sudah"
-                        ? ""
-                        : `<button class="btn btn-sudah" onclick="tandaiSudah('${doc.id}')">Sudah Diinput</button>`
-                    }
-                    <button class="btn btn-hapus" onclick="hapusData('${doc.id}')">Hapus</button>
-                </td>
-            `;
-
-            tableBody.appendChild(tr);
-        });
     });
 
-    totalAktifEl.textContent=totalAktif;
+  });
+
+  totalAktifEl.textContent = totalAktif;
+
 });
 
 function tandaiSudah(id){
-    db.collection('pengajuan')
-      .doc(id)
-      .update({
-        status_admin:"Sudah"
-      });
-    alert("Berhasil ditandai Sudah");
+  db.collection("pengajuan").doc(id).update({
+    status_admin: "Sudah"
+  });
+  alert("Berhasil ditandai Sudah");
 }
 
 function hapusData(id){
-    if(confirm("Yakin hapus data?")){
-        db.collection('pengajuan').doc(id).delete();
-    }
+  if(confirm("Yakin hapus data?")){
+    db.collection("pengajuan").doc(id).delete();
+  }
 }
 </script>
 

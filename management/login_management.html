@@ -37,9 +37,9 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 function showPopup(msg){
-  const popup=document.getElementById("popup");
-  popup.textContent=msg;
-  popup.style.display="block";
+  const popup = document.getElementById("popup");
+  popup.textContent = msg;
+  popup.style.display = "block";
   setTimeout(()=>popup.style.display="none",2000);
 }
 
@@ -49,24 +49,32 @@ document.getElementById("loginBtn").addEventListener("click", async ()=>{
   if(!usernameInput || !passwordInput) return showPopup("Isi username dan password");
 
   try{
-    const querySnap = await db.collection("users").where("username","==",usernameInput).get();
-    if(querySnap.empty) return showPopup("Username tidak ditemukan");
+    // Ambil semua dokumen di collection 'users'
+    const snapshot = await db.collection("users").get();
+    if(snapshot.empty) return showPopup("Tidak ada user di database");
 
-    const data = querySnap.docs[0].data();
+    let userFound = null;
+    snapshot.forEach(doc=>{
+      const d = doc.data();
+      if(d.username === usernameInput){
+        userFound = d;
+      }
+    });
 
-    if(passwordInput !== data.password) return showPopup("Password salah");
+    if(!userFound) return showPopup("Username tidak ditemukan");
+    if(userFound.password !== passwordInput) return showPopup("Password salah");
 
-    // Simpan session lengkap
-    localStorage.setItem("userSession", JSON.stringify({
-      username: data.username,
-      role: data.role,
-      password: data.password
-    }));
+    // Simpan session
+    localStorage.setItem("userSession", JSON.stringify(userFound));
 
     // Arahkan sesuai role
-    if(data.role.toLowerCase() === "management") window.location.href="dashboard_management.html";
-    else if(data.role.toLowerCase() === "admin") window.location.href="dashboard_admin.html";
-    else showPopup("Role tidak dikenal, hubungi admin");
+    if(userFound.role.toLowerCase() === "management"){
+      window.location.href = "dashboard_management.html";
+    } else if(userFound.role.toLowerCase() === "admin"){
+      window.location.href = "dashboard_admin.html";
+    } else {
+      showPopup("Role tidak dikenal, hubungi admin");
+    }
 
   }catch(err){
     console.error(err);

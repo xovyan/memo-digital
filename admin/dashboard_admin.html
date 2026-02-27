@@ -3,29 +3,40 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Dashboard - Free Parkir</title>
+<title>Admin Dashboard - Plat Terpisah</title>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif;}
 body{background:#f1f4f9;}
 h2{text-align:center;padding:20px;background:#2c3e50;color:white;}
 .container{width:95%;max-width:1200px;margin:20px auto;background:white;padding:20px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.05);}
-.summary-box{background:#eafaf1;border:2px solid #2ecc71;padding:15px;border-radius:10px;margin-bottom:10px;text-align:center;font-size:18px;font-weight:bold;color:#27ae60;}
-.filter-area{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:15px;}
-.filter-area input, .filter-area select, .filter-area button{padding:8px 12px;border-radius:6px;border:1px solid #ccc;font-size:14px;}
-.filter-area button{background:#2c3e50;color:white;border:none;cursor:pointer;}
-.filter-area button:hover{background:#1a252f;}
+.summary-box{background:#eafaf1;border:2px solid #2ecc71;padding:15px;border-radius:10px;margin-bottom:10px;text-align:center;font-size:16px;font-weight:bold;color:#27ae60;word-break:break-word;}
 .table-wrapper{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
-th{background:#34495e;color:white;padding:10px;}
-td{padding:8px;text-align:center;border-bottom:1px solid #eee;vertical-align:middle;}
+th{background:#34495e;color:white;padding:10px;white-space:nowrap;}
+td{padding:8px;text-align:center;border-bottom:1px solid #eee;vertical-align:middle;word-break:break-word;}
 .status-aktif{color:green;font-weight:bold;}
 .status-selesai{color:gray;font-weight:bold;}
 .status-sudah{color:blue;font-weight:bold;}
 .status-baru{color:red;font-weight:bold;}
-.btn{padding:5px 10px;border-radius:6px;border:none;cursor:pointer;font-size:12px;margin:2px;}
+.btn{padding:5px 8px;border-radius:6px;border:none;cursor:pointer;font-size:12px;margin:2px;display:inline-block;}
 .btn-sudah{background:#27ae60;color:white;}
 .btn-hapus{background:#e74c3c;color:white;}
+@media(max-width:768px){
+  table, thead, tbody, th, td, tr{display:block;}
+  thead tr{display:none;}
+  td{position:relative;padding-left:50%;text-align:left;}
+  td::before{
+    position:absolute;
+    top:8px;
+    left:10px;
+    width:45%;
+    white-space:nowrap;
+    font-weight:bold;
+    content: attr(data-label);
+  }
+  td button{width:100%; margin-top:5px;}
+}
 </style>
 </head>
 <body>
@@ -36,20 +47,6 @@ td{padding:8px;text-align:center;border-bottom:1px solid #eee;vertical-align:mid
 
 <div class="summary-box">
 TOTAL PARKIR AKTIF SAAT INI : <span id="total-aktif">0</span> | TOTAL BELUM DI INPUT : <span id="total-belum">0</span>
-</div>
-
-<div class="filter-area">
-<input type="text" id="filterNama" placeholder="Cari Nama">
-<input type="text" id="filterDept" placeholder="Cari Departement">
-<input type="text" id="filterPlat" placeholder="Cari Plat">
-<select id="filterStatus">
-<option value="">Semua Status</option>
-<option value="Aktif">Aktif</option>
-<option value="Selesai">Selesai</option>
-</select>
-<input type="month" id="filterBulan">
-<button onclick="loadData()">Filter</button>
-<button onclick="exportExcel()">Export Excel</button>
 </div>
 
 <div class="table-wrapper">
@@ -74,7 +71,6 @@ TOTAL PARKIR AKTIF SAAT INI : <span id="total-aktif">0</span> | TOTAL BELUM DI I
 
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -102,32 +98,31 @@ function renderRow(data, id){
             ? "<span class='status-selesai'>Selesai</span>"
             : "-";
 
-        // 🔥 FIX PLAT ARRAY ATAU STRING
-    let platFormatted="-";
+    // Pastikan plat selalu array
+    let platList = [];
     if(Array.isArray(data.nomor_plat)){
-        platFormatted = data.nomor_plat.join("<br>");
-    }else if(typeof data.nomor_plat === "string"){
-        platFormatted = data.nomor_plat.split(",").map(p=>p.trim()).join("<br>");
-     }
+        platList = data.nomor_plat;
+    } else if(typeof data.nomor_plat === "string"){
+        platList = data.nomor_plat.split(",").map(p=>p.trim());
+    }
 
     let statusAdmin = data.status_admin==="Sudah"
         ? "<span class='status-sudah'>Sudah</span>"
         : "<span class='status-baru'>Belum</span>";
 
-    // Jika lebih dari 1 plat, buat baris terpisah
     platList.forEach((plat,index)=>{
         const tr = document.createElement("tr");
         tr.innerHTML=`
-            <td>${index===0?data.jenis_pengajuan:''}</td>
-            <td>${index===0?data.nama:''}</td>
-            <td>${index===0?data.departement:''}</td>
-            <td>${plat||''}</td>
-            <td>${index===0?data.jenis_kendaraan:''}</td>
-            <td>${index===0?data.periode_awal+' s/d '+data.periode_akhir:''}</td>
-            <td>${index===0?data.keterangan:''}</td>
-            <td>${index===0?statusText:''}</td>
-            <td>${index===0?statusAdmin:''}</td>
-            <td>
+            <td data-label="Jenis">${index===0?data.jenis_pengajuan:''}</td>
+            <td data-label="Nama">${index===0?data.nama:''}</td>
+            <td data-label="Departement">${index===0?data.departement:''}</td>
+            <td data-label="Plat">${plat||''}</td>
+            <td data-label="Kendaraan">${index===0?data.jenis_kendaraan:''}</td>
+            <td data-label="Periode">${index===0?data.periode_awal+' s/d '+data.periode_akhir:''}</td>
+            <td data-label="Keterangan">${index===0?data.keterangan:''}</td>
+            <td data-label="Status">${index===0?statusText:''}</td>
+            <td data-label="Status Admin">${index===0?statusAdmin:''}</td>
+            <td data-label="Aksi">
                 ${index===0?(data.status_admin==="Sudah"?"":`<button class="btn btn-sudah" onclick="tandaiSudah('${id}')">Sudah Input</button>`):''}
                 ${index===0?`<button class="btn btn-hapus" onclick="hapusData('${id}')">Hapus</button>`:''}
             </td>
@@ -147,12 +142,6 @@ function hapusData(id){
 }
 
 function loadData(){
-    const filterNama = document.getElementById('filterNama').value.toLowerCase();
-    const filterDept = document.getElementById('filterDept').value.toLowerCase();
-    const filterPlat = document.getElementById('filterPlat').value.toLowerCase();
-    const filterStatus = document.getElementById('filterStatus').value;
-    const filterBulan = document.getElementById('filterBulan').value;
-
     db.collection("pengajuan").orderBy("timestamp","desc").get().then(snapshot=>{
         tableBody.innerHTML="";
         let totalAktif=0;
@@ -174,55 +163,12 @@ function loadData(){
             if(today >= awal && today <= akhir) totalAktif++;
             if(d.status_admin!=="Sudah") totalBelum++;
 
-            // Filter
-            if(filterNama && !d.nama.toLowerCase().includes(filterNama)) return;
-            if(filterDept && !d.departement.toLowerCase().includes(filterDept)) return;
-            if(filterPlat){
-                let platList = Array.isArray(d.nomor_plat)?d.nomor_plat:d.nomor_plat.split(",");
-                platList = platList.map(p=>p.trim().toLowerCase());
-                if(!platList.some(p=>p.includes(filterPlat))) return;
-            }
-            if(filterStatus){
-                let status = today >= awal && today <= akhir ? "Aktif" : today > akhir ? "Selesai" : "-";
-                if(status !== filterStatus) return;
-            }
-            if(filterBulan){
-                const blnAwal = d.periode_awal.substring(0,7);
-                if(blnAwal !== filterBulan) return;
-            }
-
             renderRow(d, doc.id);
         });
 
         totalAktifEl.textContent=totalAktif;
         totalBelumEl.textContent=totalBelum;
     });
-}
-
-function exportExcel(){
-    const rows = document.querySelectorAll("#data-table tr");
-    if(rows.length===0){alert("Tidak ada data untuk di export"); return;}
-    let dataExport=[];
-    rows.forEach(row=>{
-        const cells=row.querySelectorAll("td");
-        if(cells.length>0){
-            dataExport.push({
-                Jenis:cells[0].innerText,
-                Nama:cells[1].innerText,
-                Departement:cells[2].innerText,
-                Plat:cells[3].innerText,
-                Kendaraan:cells[4].innerText,
-                Periode:cells[5].innerText,
-                Keterangan:cells[6].innerText,
-                Status:cells[7].innerText,
-                Status_Admin:cells[8].innerText
-            });
-        }
-    });
-    const worksheet=XLSX.utils.json_to_sheet(dataExport);
-    const workbook=XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Data Pengajuan");
-    XLSX.writeFile(workbook,"Data_Pengajuan.xlsx");
 }
 
 loadData();

@@ -3,52 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin - Free Parkir</title>
-
+<title>Admin Dashboard</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif;}
-body{background:#f1f4f9;}
-h2{text-align:center;padding:20px;background:#2c3e50;color:white;}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
+body{background:#f4f6f9}
+header{background:#2c3e50;color:#fff;padding:15px;text-align:center;font-size:20px}
 .container{width:95%;max-width:1200px;margin:20px auto;background:white;padding:20px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.05);}
-.summary-box{background:#eafaf1;border:2px solid #2ecc71;padding:15px;border-radius:10px;margin-bottom:10px;text-align:center;font-size:18px;font-weight:bold;color:#27ae60;}
-.summary-box span{display:block;margin-top:5px;font-size:16px;color:#34495e;}
-.filter-box{margin-bottom:10px;display:flex;gap:10px;flex-wrap:wrap;}
-.filter-box input, .filter-box select{padding:6px 10px;border-radius:6px;border:1px solid #ccc;}
+.summary-box{background:#eafaf1;border:2px solid #2ecc71;padding:15px;border-radius:10px;margin-bottom:20px;text-align:center;font-size:18px;font-weight:bold;color:#27ae60;}
 .table-wrapper{overflow-x:auto;}
-table{width:100%;border-collapse:collapse;font-size:13px;}
-th{background:#34495e;color:white;padding:12px;text-align:center;}
-td{padding:10px;text-align:center;border-bottom:1px solid #eee;vertical-align:middle;}
-.status-aktif{color:green;font-weight:bold;}
-.status-selesai{color:gray;font-weight:bold;}
-.status-sudah{color:blue;font-weight:bold;}
-.btn{padding:6px 10px;border-radius:6px;border:none;cursor:pointer;font-size:12px;margin:2px;}
-.btn-sudah{background:#27ae60;color:white;}
-.btn-hapus{background:#e74c3c;color:white;}
-.btn-export{background:#2980b9;color:white;}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#34495e;color:white;padding:12px}
+td{padding:10px;text-align:center;border-bottom:1px solid #eee}
+.btn{padding:6px 10px;border-radius:6px;border:none;cursor:pointer;font-size:12px}
+.btn-sudah{background:#27ae60;color:white;margin-bottom:5px}
+.btn-hapus{background:#e74c3c;color:white}
+.status-baru{color:red;font-weight:bold}
+.status-sudah{color:green;font-weight:bold}
 </style>
 </head>
-
 <body>
 
 <h2>KELOLA ADMIN</h2>
 
 <div class="container">
-
 <div class="summary-box">
-TOTAL PARKIR AKTIF SAAT INI : <span id="total-aktif">0</span>
-<span>TOTAL BELUM DI INPUT : <span id="total-belum">0</span></span>
-</div>
-
-<div class="filter-box">
-<input type="text" id="filter-nama" placeholder="Cari Nama">
-<input type="text" id="filter-dept" placeholder="Cari Departement">
-<input type="text" id="filter-plat" placeholder="Cari Plat">
-<select id="filter-status">
-  <option value="">Semua Status</option>
-  <option value="Belum">Belum</option>
-  <option value="Sudah">Sudah</option>
-</select>
-<button class="btn btn-export" id="exportExcel">Export Excel</button>
+TOTAL PARKIR AKTIF SAAT INI : <span id="totalAktif">0</span> | TOTAL BELUM INPUT : <span id="totalBelum">0</span>
 </div>
 
 <div class="table-wrapper">
@@ -63,19 +42,16 @@ TOTAL PARKIR AKTIF SAAT INI : <span id="total-aktif">0</span>
 <th>Periode</th>
 <th>Keterangan</th>
 <th>Status</th>
-<th>Status Admin</th>
 <th>Aksi</th>
 </tr>
 </thead>
-<tbody id="data-table"></tbody>
+<tbody id="dataTable"></tbody>
 </table>
 </div>
-
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <script>
 const firebaseConfig = {
@@ -86,106 +62,69 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-const tableBody = document.getElementById('data-table');
-const totalAktifEl = document.getElementById('total-aktif');
-const totalBelumEl = document.getElementById('total-belum');
+const tableBody = document.getElementById('dataTable');
+const totalAktifEl = document.getElementById('totalAktif');
+const totalBelumEl = document.getElementById('totalBelum');
 
-// Filter inputs
-const filterNama = document.getElementById('filter-nama');
-const filterDept = document.getElementById('filter-dept');
-const filterPlat = document.getElementById('filter-plat');
-const filterStatus = document.getElementById('filter-status');
-
-let dataGlobal = []; // simpan semua data untuk filter/export
-
-function renderRow(data, docId, plat, statusAdmin){
+function renderRow(docId,data,index){
     const today = new Date();
     const awal = new Date(data.periode_awal);
     const akhir = new Date(data.periode_akhir);
 
-    let statusText="-";
-    if(today>=awal && today<=akhir){
-        statusText="<span class='status-aktif'>Aktif</span>";
-    }else if(today>akhir){
-        statusText="<span class='status-selesai'>Selesai</span>";
-    }
+    let statusText = (today>=awal && today<=akhir) ? "Aktif" : "Selesai";
+
+    // Ambil status plat per index
+    let statusPlat = Array.isArray(data.status_admin_per_plat) ? data.status_admin_per_plat[index] : "Belum";
 
     const tr = document.createElement("tr");
-    tr.dataset.nama = data.nama || '';
-    tr.dataset.dept = data.departement || '';
-    tr.dataset.plat = plat || '';
-    tr.dataset.status = statusAdmin || '';
-
     tr.innerHTML = `
-        <td>${data.jenis_pengajuan||''}</td>
-        <td>${data.nama||''}</td>
-        <td>${data.departement||''}</td>
-        <td>${plat||''}</td>
-        <td>${data.jenis_kendaraan||''}</td>
-        <td>${data.periode_awal||''} s/d ${data.periode_akhir||''}</td>
-        <td>${data.keterangan||''}</td>
-        <td>${statusText}</td>
-        <td>${statusAdmin==="Sudah"?'<span class="status-sudah">Sudah</span>':'Belum'}</td>
+        <td>${data.jenis_pengajuan||""}</td>
+        <td>${data.nama||""}</td>
+        <td>${data.departement||""}</td>
+        <td>${data.nomor_plat[index]||""}</td>
+        <td>${data.jenis_kendaraan||""}</td>
+        <td>${data.periode_awal||""} s/d ${data.periode_akhir||""}</td>
+        <td>${data.keterangan||""}</td>
+        <td>${statusPlat==="Sudah"?'<span class="status-sudah">Sudah</span>':'<span class="status-baru">Belum</span>'}</td>
         <td>
-            ${statusAdmin==="Sudah" ? "" : `<button class="btn btn-sudah" onclick="tandaiSudah('${docId}','${plat}')">Sudah Input</button>`}
-            <button class="btn btn-hapus" onclick="hapusData('${docId}')">Hapus</button>
+        ${statusPlat==="Belum"?`<button class="btn btn-sudah" onclick="tandaiSudah('${docId}',${index})">Sudah Input</button>`:""}
         </td>
     `;
     tableBody.appendChild(tr);
 }
 
-function tandaiSudah(docId, plat){
-    // Update field untuk plat tertentu
-    db.collection("pengajuan").doc(docId).get().then(doc=>{
-        if(!doc.exists) return;
-        let d = doc.data();
-        let platArray = Array.isArray(d.nomor_plat)?d.nomor_plat:[d.nomor_plat];
-        let statusArray = Array.isArray(d.status_admin_per_plat)?d.status_admin_per_plat:platArray.map(p=>"Belum");
-
-        const index = platArray.indexOf(plat);
-        if(index>=0) statusArray[index]="Sudah";
-
-        db.collection("pengajuan").doc(docId).update({
-            status_admin_per_plat: statusArray,
-        });
+function tandaiSudah(docId,index){
+    const docRef = db.collection("pengajuan").doc(docId);
+    docRef.get().then(docSnap=>{
+        if(docSnap.exists){
+            let data = docSnap.data();
+            let statusPlat = Array.isArray(data.status_admin_per_plat)?data.status_admin_per_plat:[];
+            statusPlat[index] = "Sudah";
+            docRef.update({status_admin_per_plat:statusPlat});
+        }
     });
 }
 
-function hapusData(id){
-    if(confirm("Yakin hapus data?")){
-        db.collection("pengajuan").doc(id).delete();
-    }
-}
-
 function loadData(){
-    db.collection("pengajuan")
-    .orderBy("timestamp","desc")
-    .onSnapshot(snapshot=>{
+    db.collection("pengajuan").onSnapshot(snapshot=>{
         tableBody.innerHTML="";
-        dataGlobal = [];
         let totalAktif=0;
         let totalBelum=0;
         const today = new Date();
 
-        if(snapshot.empty){
-            tableBody.innerHTML="<tr><td colspan='10'>Belum ada data</td></tr>";
-            totalAktifEl.textContent=0;
-            totalBelumEl.textContent=0;
-            return;
-        }
-
         snapshot.forEach(doc=>{
-            let d = doc.data();
-            let platArray = Array.isArray(d.nomor_plat)?d.nomor_plat:[d.nomor_plat];
-            let statusArray = Array.isArray(d.status_admin_per_plat)?d.status_admin_per_plat:platArray.map(p=>"Belum");
+            const data = doc.data();
+            const awal = new Date(data.periode_awal);
+            const akhir = new Date(data.periode_akhir);
+            const daftarPlat = Array.isArray(data.nomor_plat)?data.nomor_plat:[data.nomor_plat];
+            const statusPlat = Array.isArray(data.status_admin_per_plat)?data.status_admin_per_plat:daftarPlat.map(()=> "Belum");
 
-            platArray.forEach((plat,i)=>{
-                renderRow(d, doc.id, plat, statusArray[i]);
-                if(today>=new Date(d.periode_awal) && today<=new Date(d.periode_akhir)) totalAktif++;
-                if(statusArray[i]!=="Sudah") totalBelum++;
+            if(today>=awal && today<=akhir) totalAktif++;
+
+            daftarPlat.forEach((plat,index)=>{
+                renderRow(doc.id,data,index);
+                if(statusPlat[index]==="Belum") totalBelum++;
             });
-
-            dataGlobal.push({id:doc.id, ...d, platArray, statusArray});
         });
 
         totalAktifEl.textContent = totalAktif;
@@ -193,64 +132,7 @@ function loadData(){
     });
 }
 
-// Filter
-function applyFilter(){
-    const namaVal = filterNama.value.toLowerCase();
-    const deptVal = filterDept.value.toLowerCase();
-    const platVal = filterPlat.value.toLowerCase();
-    const statusVal = filterStatus.value;
-
-    tableBody.innerHTML="";
-    let totalAktif=0;
-    let totalBelum=0;
-    const today = new Date();
-
-    dataGlobal.forEach(d=>{
-        let platArray = Array.isArray(d.nomor_plat)?d.nomor_plat:[d.nomor_plat];
-        let statusArray = Array.isArray(d.status_admin_per_plat)?d.status_admin_per_plat:platArray.map(p=>"Belum");
-
-        platArray.forEach((plat,i)=>{
-            if( (namaVal && !d.nama.toLowerCase().includes(namaVal)) ) return;
-            if( (deptVal && !d.departement.toLowerCase().includes(deptVal)) ) return;
-            if( (platVal && !plat.toLowerCase().includes(platVal)) ) return;
-            if( statusVal && statusArray[i] !== statusVal ) return;
-
-            renderRow(d, d.id, plat, statusArray[i]);
-
-            if(today>=new Date(d.periode_awal) && today<=new Date(d.periode_akhir)) totalAktif++;
-            if(statusArray[i]!=="Sudah") totalBelum++;
-        });
-    });
-
-    totalAktifEl.textContent = totalAktif;
-    totalBelumEl.textContent = totalBelum;
-}
-
-// Event listeners filter
-filterNama.addEventListener("input", applyFilter);
-filterDept.addEventListener("input", applyFilter);
-filterPlat.addEventListener("input", applyFilter);
-filterStatus.addEventListener("change", applyFilter);
-
-// Export Excel
-document.getElementById('exportExcel').addEventListener('click', ()=>{
-    const wb = XLSX.utils.book_new();
-    const ws_data = [["Jenis","Nama","Departement","Plat","Kendaraan","Periode","Keterangan","Status","Status Admin"]];
-    
-    tableBody.querySelectorAll("tr").forEach(tr=>{
-        const row = [];
-        tr.querySelectorAll("td").forEach(td=>{
-            row.push(td.textContent.trim());
-        });
-        ws_data.push(row);
-    });
-    const ws = XLSX.utils.aoa_to_sheet(ws_data);
-    XLSX.utils.book_append_sheet(wb, ws, "Pengajuan");
-    XLSX.writeFile(wb, "Data_Parkir.xlsx");
-});
-
 loadData();
 </script>
-
 </body>
 </html>

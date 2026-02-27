@@ -5,28 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard Management</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Arial;}
-body{background:#f4f6f9}
-header{background:#4e54c8;color:#fff;padding:15px;text-align:center;font-size:20px}
-nav{display:flex;background:#fff}
-nav button{flex:1;padding:12px;border:none;background:none;font-weight:bold;color:#4e54c8;cursor:pointer}
-nav button.active{border-bottom:3px solid #4e54c8}
-section{padding:15px}
-form input,form select,form textarea,form button{width:100%;margin-bottom:10px;padding:10px;border-radius:8px;border:1px solid #ccc;font-size:14px}
-form button{background:#4e54c8;color:#fff;font-weight:bold;border:none;cursor:pointer}
-.nopol-group{display:flex;gap:5px;margin-bottom:5px;align-items:center}
-.nopol-group input{flex:1;min-width:0}
-.nopol-group button{background:red;color:#fff;border:none;border-radius:6px;width:30px;height:30px;cursor:pointer;font-size:16px;line-height:1;padding:0}
-#addNopol{background:#27ae60;padding:6px 12px;font-size:14px;border-radius:6px;margin-top:5px;display:inline-block}
-table{width:100%;border-collapse:collapse;margin-top:15px;background:#fff;font-size:13px}
-th,td{border:1px solid #ccc;padding:6px;text-align:center}
-th{background:#4e54c8;color:#fff}
-.status-baru{color:red;font-weight:bold}
-.status-sudah{color:green;font-weight:bold}
-.popup{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#16a34a;color:#fff;padding:12px 20px;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,0.2);display:none;z-index:999}
-.filter-area{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
-.filter-area input, .filter-area select, .filter-area button{padding:6px 10px;font-size:13px;border-radius:6px;border:1px solid #ccc}
-.total-belum{margin-top:10px;font-weight:bold;font-size:14px}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif;}
+body{background:#f1f4f9;}
+header{background:#4e54c8;color:white;padding:15px;text-align:center;font-size:20px;}
+nav{display:flex;background:white;}
+nav button{flex:1;padding:12px;border:none;background:none;font-weight:bold;color:#4e54c8;cursor:pointer;}
+nav button.active{border-bottom:3px solid #4e54c8;}
+section{padding:15px;}
+form input,form select,form textarea,form button{width:100%;margin-bottom:10px;padding:10px;border-radius:8px;border:1px solid #ccc;font-size:14px;}
+form button{background:#4e54c8;color:white;font-weight:bold;border:none;cursor:pointer;}
+.popup{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#16a34a;color:white;padding:12px 20px;border-radius:8px;display:none;z-index:999;}
+.total-belum{margin-top:10px;font-weight:bold;font-size:14px;}
+.table-wrapper{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;background:white;}
+th,td{border:1px solid #ccc;padding:6px;text-align:center;}
+th{background:#4e54c8;color:white;}
+.status-baru{color:red;font-weight:bold;}
+.status-sudah{color:green;font-weight:bold;}
+.nopol-group{display:flex;gap:5px;margin-bottom:5px;align-items:center;}
+.nopol-group input{flex:1;min-width:0;}
+.nopol-group button{background:red;color:white;border:none;border-radius:6px;width:30px;height:30px;cursor:pointer;font-size:16px;line-height:1;padding:0;}
+#addNopol{background:#27ae60;padding:6px 12px;font-size:14px;border-radius:6px;margin-top:5px;display:inline-block;}
+.filter-area{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+.filter-area input,.filter-area select,.filter-area button{padding:6px 10px;font-size:13px;border-radius:6px;border:1px solid #ccc;}
 </style>
 </head>
 <body>
@@ -44,6 +45,7 @@ th{background:#4e54c8;color:#fff}
 <section>
 <!-- PENGAJUAN -->
 <div class="tab" id="pengajuan">
+<p>Selamat datang, <span id="userDisplay"></span></p>
 <form id="formPengajuan" autocomplete="off">
 <select name="jenis_pengajuan" required>
 <option value="">-- Pilih Jenis --</option>
@@ -72,37 +74,30 @@ th{background:#4e54c8;color:#fff}
 <button onclick="exportExcel()">Export Excel</button>
 </div>
 <div class="total-belum">Total Belum Input: <span id="totalBelum">0</span></div>
+<div class="table-wrapper">
 <table>
 <thead>
-<tr>
-<th>Jenis</th>
-<th>Nama</th>
-<th>Dept</th>
-<th>Plat</th>
-<th>Kendaraan</th>
-<th>Periode</th>
-<th>Keterangan</th>
-<th>Status</th>
-</tr>
+<tr><th>Jenis</th><th>Nama</th><th>Dept</th><th>Plat</th><th>Kendaraan</th><th>Periode</th><th>Keterangan</th><th>Status</th></tr>
 </thead>
 <tbody id="riwayatData"></tbody>
 </table>
 </div>
+</div>
 
 <!-- GANTI PASSWORD -->
 <div class="tab" id="ganti" style="display:none">
-<form id="formGantiPassword">
-<input type="password" id="oldPassword" placeholder="Password Lama" required>
-<input type="password" id="newPassword" placeholder="Password Baru" required>
+<form id="formGantiPass">
+<input type="password" id="passLama" placeholder="Password Lama" required>
+<input type="password" id="passBaru" placeholder="Password Baru" required>
 <button type="submit">Ganti Password</button>
-<p id="passMsg" style="font-size:13px;color:red;"></p>
+<div id="msgPass" style="color:red;margin-top:8px"></div>
 </form>
 </div>
 
+<!-- LOGOUT -->
 <div class="tab" id="logout" style="display:none">
-<button onclick="logout()">Keluar</button>
+<button id="btnLogout">Keluar</button>
 </div>
-
 </section>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -118,18 +113,21 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-/* --- PROTEKSI LOGIN --- */
-const loginUser = sessionStorage.getItem('managementLogin');
-const loginRole = sessionStorage.getItem('managementRole');
-if(!loginUser || loginRole!=='management'){
-  alert('Silahkan login terlebih dahulu');
-  window.location.href='login_management.html';
+/* ============================
+   CEK SESSION LOGIN
+============================ */
+const username = sessionStorage.getItem('managementLogin');
+const role = sessionStorage.getItem('managementRole');
+if(!username || role!=="management"){
+    alert("Silahkan login terlebih dahulu");
+    window.location.href="login_management.html";
+} else {
+    document.getElementById('userDisplay').textContent = username;
 }
 
-/* LOGOUT */
-function logout(){ sessionStorage.clear(); window.location.href='login_management.html'; }
-
-/* TAB */
+/* ============================
+   TAB NAV
+============================ */
 document.querySelectorAll(".tab-btn").forEach(btn=>{
 btn.onclick=()=>{
 document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
@@ -139,62 +137,75 @@ document.getElementById(btn.dataset.tab).style.display="block";
 };
 });
 
-/* NOPOL */
+/* ============================
+   NOPOL PENGAJUAN
+============================ */
 const nopolContainer=document.getElementById("nopolContainer");
 function createNopol(){
 const div=document.createElement("div");
 div.className="nopol-group";
 div.innerHTML=`<input type="text" name="nomor_plat[]" required>
 <button type="button">×</button>`;
-div.querySelector("button").onclick=()=>{if(document.querySelectorAll('[name="nomor_plat[]"]').length>1)div.remove();};
+div.querySelector("button").onclick=()=>{ if(document.querySelectorAll('[name="nomor_plat[]"]').length>1) div.remove(); };
 return div;
 }
 function resetNopol(){ nopolContainer.innerHTML=""; nopolContainer.appendChild(createNopol()); }
 resetNopol();
 document.getElementById("addNopol").onclick=()=>nopolContainer.appendChild(createNopol());
 
-/* SUBMIT PENGAJUAN */
+/* ============================
+   SUBMIT PENGAJUAN
+============================ */
 document.getElementById("formPengajuan").addEventListener("submit",async function(e){
 e.preventDefault();
 const btn=document.getElementById("btnKirim"); btn.disabled=true;
+
 const formData=new FormData(this);
 let nomor_plat=[];
-document.querySelectorAll('[name="nomor_plat[]"]').forEach(i=>{if(i.value.trim()!=="")nomor_plat.push(i.value.trim());});
-if(nomor_plat.length===0){btn.disabled=false; return;}
+document.querySelectorAll('[name="nomor_plat[]"]').forEach(i=>{ if(i.value.trim()!=="") nomor_plat.push(i.value.trim()); });
+if(nomor_plat.length===0){btn.disabled=false;return;}
+
 await db.collection("pengajuan").add({
 ...Object.fromEntries(formData.entries()),
 nomor_plat: nomor_plat,
 status_admin_per_plat: nomor_plat.map(()=> "Belum"),
 timestamp:firebase.firestore.FieldValue.serverTimestamp()
 });
-this.reset(); resetNopol();
-window.scrollTo({top:0,behavior:"smooth"});
-const popup=document.getElementById("popup");
-popup.style.display="block";
+
+this.reset(); resetNopol(); window.scrollTo({top:0,behavior:"smooth"});
+const popup=document.getElementById("popup"); popup.style.display="block";
 setTimeout(()=>popup.style.display="none",2000);
 btn.disabled=false;
 });
 
-/* RIWAYAT & EXPORT */
+/* ============================
+   RIWAYAT
+============================ */
 let riwayatSnapshot=null;
 function loadRiwayat(){
 const cari=document.getElementById("cariFilter").value.toLowerCase();
 const bulan=document.getElementById("bulanFilter").value;
+
 if(riwayatSnapshot) riwayatSnapshot();
 
 riwayatSnapshot=db.collection("pengajuan").orderBy("timestamp","desc")
 .onSnapshot(snapshot=>{
-const tbody=document.getElementById("riwayatData"); tbody.innerHTML="";
+const tbody=document.getElementById("riwayatData");
+tbody.innerHTML="";
 let totalBelum=0;
+
 snapshot.forEach(doc=>{
 const d=doc.data();
 let daftarPlat=Array.isArray(d.nomor_plat)?d.nomor_plat:d.nomor_plat?[d.nomor_plat]:[];
 let statusPlat=Array.isArray(d.status_admin_per_plat)?d.status_admin_per_plat:daftarPlat.map(()=> "Belum");
+
 let awalBln=d.periode_awal?.substring(0,7) || "";
+
 daftarPlat.forEach((plat,index)=>{
 let match=true;
-if(cari) match = [d.nama,d.departement,plat,statusPlat[index]].some(v=>String(v).toLowerCase().includes(cari));
+if(cari){ match = [d.nama,d.departement,plat,statusPlat[index]].some(v=>String(v).toLowerCase().includes(cari)); }
 if(bulan && bulan!==awalBln) match=false;
+
 if(match){
 tbody.innerHTML+=`<tr>
 <td>${d.jenis_pengajuan||""}</td>
@@ -205,8 +216,7 @@ tbody.innerHTML+=`<tr>
 <td>${d.periode_awal||""} s/d ${d.periode_akhir||""}</td>
 <td>${d.keterangan||""}</td>
 <td>${statusPlat[index]==="Sudah"?'<span class="status-sudah">Sudah</span>':'<span class="status-baru">Belum</span>'}</td>
-</tr>`;
-}
+</tr>`;}
 if(statusPlat[index]==="Belum") totalBelum++;
 });
 });
@@ -214,6 +224,11 @@ document.getElementById("totalBelum").textContent=totalBelum;
 });
 }
 
+loadRiwayat();
+
+/* ============================
+   EXPORT EXCEL
+============================ */
 function exportExcel(){
 let dataExport=[];
 document.querySelectorAll("#riwayatData tr").forEach(row=>{
@@ -238,26 +253,43 @@ XLSX.utils.book_append_sheet(workbook,worksheet,"Riwayat");
 XLSX.writeFile(workbook,"Riwayat_Pengajuan.xlsx");
 }
 
-/* --- GANTI PASSWORD --- */
-document.getElementById('formGantiPassword').addEventListener('submit', async function(e){
+/* ============================
+   GANTI PASSWORD
+============================ */
+document.getElementById('formGantiPass').addEventListener('submit', async (e)=>{
 e.preventDefault();
-const oldPass=document.getElementById('oldPassword').value;
-const newPass=document.getElementById('newPassword').value;
-const msg=document.getElementById('passMsg');
-if(!oldPass || !newPass){ msg.textContent="Isi semua field"; return; }
+const passLama = document.getElementById('passLama').value.trim();
+const passBaru = document.getElementById('passBaru').value.trim();
+const msg = document.getElementById('msgPass'); msg.textContent="";
 
-const username = sessionStorage.getItem('managementLogin');
-const userRef = db.collection('users').doc(username);
-const userDoc = await userRef.get();
-if(!userDoc.exists){ msg.textContent="User tidak ditemukan"; return; }
+try{
+    const querySnapshot = await db.collection('users')
+        .where('username','==',username)
+        .limit(1)
+        .get();
+    if(querySnapshot.empty){ msg.textContent="User tidak ditemukan"; return; }
 
-const data = userDoc.data();
-if(data.password !== oldPass){ msg.textContent="Password lama salah"; return; }
+    const userDoc = querySnapshot.docs[0];
+    const data = userDoc.data();
 
-await userRef.update({password:newPass});
-msg.style.color="green"; msg.textContent="Password berhasil diubah";
-document.getElementById('formGantiPassword').reset();
+    if(data.password !== passLama){ msg.textContent="Password lama salah"; return; }
+
+    await db.collection('users').doc(userDoc.id).update({ password: passBaru });
+    msg.style.color="green"; msg.textContent="Password berhasil diganti";
+
+    document.getElementById('passLama').value=""; document.getElementById('passBaru').value="";
+}catch(err){
+    console.error(err); msg.textContent="Terjadi kesalahan, coba lagi";
+}
 });
+
+/* ============================
+   LOGOUT
+============================ */
+document.getElementById('btnLogout').onclick=()=>{
+  sessionStorage.clear();
+  window.location.href="login_management.html";
+};
 </script>
 
 </body>

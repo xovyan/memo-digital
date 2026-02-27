@@ -3,49 +3,51 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin - Free Parkir</title>
+<title>Admin Dashboard - Free Parkir</title>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif;}
 body{background:#f1f4f9;}
 h2{text-align:center;padding:20px;background:#2c3e50;color:white;}
 .container{width:95%;max-width:1200px;margin:20px auto;background:white;padding:20px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.05);}
-.summary-box{background:#eafaf1;border:2px solid #2ecc71;padding:15px;border-radius:10px;margin-bottom:20px;text-align:center;font-size:16px;font-weight:bold;color:#27ae60;}
-.filter-area{margin-bottom:20px;display:flex;flex-wrap:wrap;gap:10px;}
-.filter-area input{padding:6px 10px;border-radius:6px;border:1px solid #ccc;}
-.filter-area button{padding:6px 10px;border-radius:6px;background:#2c3e50;color:white;border:none;cursor:pointer;}
+.summary-box{background:#eafaf1;border:2px solid #2ecc71;padding:15px;border-radius:10px;margin-bottom:10px;text-align:center;font-size:18px;font-weight:bold;color:#27ae60;}
+.filter-area{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:15px;}
+.filter-area input, .filter-area select, .filter-area button{padding:8px 12px;border-radius:6px;border:1px solid #ccc;font-size:14px;}
+.filter-area button{background:#2c3e50;color:white;border:none;cursor:pointer;}
+.filter-area button:hover{background:#1a252f;}
 .table-wrapper{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
-th{background:#34495e;color:white;padding:12px;}
-td{padding:10px;text-align:center;border-bottom:1px solid #eee;}
+th{background:#34495e;color:white;padding:10px;}
+td{padding:8px;text-align:center;border-bottom:1px solid #eee;vertical-align:middle;}
 .status-aktif{color:green;font-weight:bold;}
 .status-selesai{color:gray;font-weight:bold;}
 .status-sudah{color:blue;font-weight:bold;}
 .status-baru{color:red;font-weight:bold;}
-.btn{padding:4px 8px;border-radius:6px;border:none;cursor:pointer;font-size:12px;margin:2px;}
+.btn{padding:5px 10px;border-radius:6px;border:none;cursor:pointer;font-size:12px;margin:2px;}
 .btn-sudah{background:#27ae60;color:white;}
 .btn-hapus{background:#e74c3c;color:white;}
-.nopol-group{display:flex;gap:5px;margin-bottom:5px;align-items:center;}
-.nopol-group input{flex:1;padding:6px;border:1px solid #ccc;border-radius:6px;}
-.nopol-group button{width:25px;height:25px;background:red;color:white;border:none;border-radius:4px;cursor:pointer;}
-@media(max-width:768px){.filter-area{flex-direction:column;}.nopol-group input{flex:1;}}
 </style>
 </head>
-
 <body>
 
-<h2>KELOLA ADMIN</h2>
+<h2>ADMIN DASHBOARD - FREE PARKIR</h2>
 
 <div class="container">
 
 <div class="summary-box">
-TOTAL PARKIR AKTIF SAAT INI: <span id="total-aktif">0</span><br>
-TOTAL BELUM DI INPUT: <span id="total-belum">0</span>
+TOTAL PARKIR AKTIF SAAT INI : <span id="total-aktif">0</span> | TOTAL BELUM DI INPUT : <span id="total-belum">0</span>
 </div>
 
 <div class="filter-area">
-<input type="text" id="cariFilter" placeholder="Cari Nama, Dept, Plat, Status">
-<input type="month" id="bulanFilter">
+<input type="text" id="filterNama" placeholder="Cari Nama">
+<input type="text" id="filterDept" placeholder="Cari Departement">
+<input type="text" id="filterPlat" placeholder="Cari Plat">
+<select id="filterStatus">
+<option value="">Semua Status</option>
+<option value="Aktif">Aktif</option>
+<option value="Selesai">Selesai</option>
+</select>
+<input type="month" id="filterBulan">
 <button onclick="loadData()">Filter</button>
 <button onclick="exportExcel()">Export Excel</button>
 </div>
@@ -70,27 +72,6 @@ TOTAL BELUM DI INPUT: <span id="total-belum">0</span>
 </table>
 </div>
 
-<div style="margin-top:20px;">
-<h3>Tambah Pengajuan Baru</h3>
-<form id="formPengajuan" autocomplete="off">
-<select name="jenis_pengajuan" required>
-<option value="">-- Pilih Jenis --</option>
-<option value="Free Parkir">Free Parkir</option>
-<option value="Compliment">Compliment</option>
-<option value="Ubah Plat">Ubah Plat</option>
-</select>
-<input type="text" name="nama" placeholder="Nama" required>
-<input type="text" name="departement" placeholder="Departement" required>
-<div id="nopolContainer"></div>
-<button type="button" id="addNopol" style="background:#27ae60">+ Plat</button>
-<input type="text" name="jenis_kendaraan" placeholder="Jenis Kendaraan">
-<input type="date" name="periode_awal" required>
-<input type="date" name="periode_akhir" required>
-<textarea name="keterangan" placeholder="Keterangan"></textarea>
-<button type="submit" id="btnKirim">Kirim</button>
-</form>
-</div>
-
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -105,146 +86,143 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+
 const tableBody = document.getElementById('data-table');
 const totalAktifEl = document.getElementById('total-aktif');
+const totalBelumEl = document.getElementById('total-belum');
 
-let snapshotListener = null;
+function renderRow(data, id) {
+    const today = new Date();
+    const awal = new Date(data.periode_awal);
+    const akhir = new Date(data.periode_akhir);
 
-/* NOPOL */
-const nopolContainer=document.getElementById("nopolContainer");
-function createNopol(){
-  const div=document.createElement("div");
-  div.className="nopol-group";
-  div.innerHTML=`<input type="text" name="nomor_plat[]" required>
-  <button type="button">×</button>`;
-  div.querySelector("button").onclick=()=>{if(document.querySelectorAll('[name="nomor_plat[]"]').length>1)div.remove();};
-  return div;
-}
-function resetNopol(){ nopolContainer.innerHTML=""; nopolContainer.appendChild(createNopol()); }
-resetNopol();
-document.getElementById("addNopol").onclick=()=>nopolContainer.appendChild(createNopol());
+    let statusText = today >= awal && today <= akhir
+        ? "<span class='status-aktif'>Aktif</span>"
+        : today > akhir
+            ? "<span class='status-selesai'>Selesai</span>"
+            : "-";
 
-/* SUBMIT */
-document.getElementById("formPengajuan").addEventListener("submit",async function(e){
-  e.preventDefault();
-  const btn=document.getElementById("btnKirim");
-  btn.disabled=true;
-  const formData=new FormData(this);
-  let nomor_plat=[];
-  document.querySelectorAll('[name="nomor_plat[]"]').forEach(i=>{if(i.value.trim()!=="")nomor_plat.push(i.value.trim());});
-  if(nomor_plat.length===0){btn.disabled=false; return;}
-
-  await db.collection("pengajuan").add({
-    ...Object.fromEntries(formData.entries()),
-    nomor_plat: nomor_plat,
-    status_admin:"Belum",
-    timestamp:firebase.firestore.FieldValue.serverTimestamp()
-  });
-
-  this.reset(); resetNopol(); window.scrollTo({top:0,behavior:"smooth"});
-  btn.disabled=false;
-});
-
-/* RENDER ROW */
-function renderRow(data,id){
-  const today = new Date();
-  const awal = new Date(data.periode_awal);
-  const akhir = new Date(data.periode_akhir);
-  let statusText="-";
-  if(today>=awal && today<=akhir) statusText="<span class='status-aktif'>Aktif</span>";
-  else if(today>akhir) statusText="<span class='status-selesai'>Selesai</span>";
-
-  let daftarPlat = Array.isArray(data.nomor_plat)?data.nomor_plat:[data.nomor_plat];
-  let platFormatted = daftarPlat.map(p=>p).join("<br>");
-
-  let statusAdmin = data.status_admin==="Sudah" ? "<span class='status-sudah'>Sudah</span>" : "<span class='status-baru'>Belum</span>";
-
-  const tr=document.createElement("tr");
-  tr.innerHTML=`
-    <td>${data.jenis_pengajuan||''}</td>
-    <td>${data.nama||''}</td>
-    <td>${data.departement||''}</td>
-    <td>${platFormatted}</td>
-    <td>${data.jenis_kendaraan||''}</td>
-    <td>${data.periode_awal||''} s/d ${data.periode_akhir||''}</td>
-    <td>${data.keterangan||''}</td>
-    <td>${statusText}</td>
-    <td>${statusAdmin}</td>
-    <td>
-      ${data.status_admin==="Sudah" ? "" : `<button class="btn btn-sudah" onclick="tandaiSudah('${id}')">Sudah Input</button>`}
-      <button class="btn btn-hapus" onclick="hapusData('${id}')">Hapus</button>
-    </td>`;
-  tableBody.appendChild(tr);
-}
-
-/* UPDATE STATUS ADMIN */
-function tandaiSudah(id){ db.collection("pengajuan").doc(id).update({status_admin:"Sudah"}); }
-
-/* HAPUS DATA */
-function hapusData(id){ if(confirm("Yakin hapus data?")) db.collection("pengajuan").doc(id).delete(); }
-
-/* LOAD DATA DENGAN FILTER */
-function loadData(){
-  const cari=document.getElementById("cariFilter").value.toLowerCase();
-  const bulan=document.getElementById("bulanFilter").value;
-  if(snapshotListener) snapshotListener();
-
-  snapshotListener=db.collection("pengajuan").orderBy("timestamp","desc")
-  .onSnapshot(snapshot=>{
-    tableBody.innerHTML="";
-    let totalAktif=0;
-    let totalBelum=0;
-    const today=new Date();
-
-    snapshot.forEach(doc=>{
-      const d=doc.data();
-      const awal=new Date(d.periode_awal);
-      const akhir=new Date(d.periode_akhir);
-      if(today>=awal && today<=akhir) totalAktif++;
-      if(d.status_admin==="Belum") totalBelum++;
-
-      let daftarPlat = Array.isArray(d.nomor_plat)?d.nomor_plat:[d.nomor_plat];
-      let bulanAwal = d.periode_awal?.substring(0,7) || "";
-
-      let match=true;
-      if(cari){
-        match = [d.nama,d.departement,...daftarPlat,d.status_admin].some(v=>String(v).toLowerCase().includes(cari));
-      }
-      if(bulan && bulan!==bulanAwal) match=false;
-
-      if(match) renderRow(d,doc.id);
-    });
-
-    totalAktifEl.textContent=totalAktif;
-    document.getElementById("total-belum").textContent=totalBelum;
-  });
-}
-
-/* EXPORT EXCEL */
-function exportExcel(){
-  let dataExport=[];
-  const rows=document.querySelectorAll("#data-table tr");
-  rows.forEach(row=>{
-    const cells=row.querySelectorAll("td");
-    if(cells.length>0){
-      dataExport.push({
-        Jenis:cells[0].innerText,
-        Nama:cells[1].innerText,
-        Departement:cells[2].innerText,
-        Plat:cells[3].innerText,
-        Kendaraan:cells[4].innerText,
-        Periode:cells[5].innerText,
-        Keterangan:cells[6].innerText,
-        Status:cells[7].innerText,
-        Status_Admin:cells[8].innerText
-      });
+    // Plat tampil baris baru
+    let platFormatted = "-";
+    if(data.nomor_plat){
+        if(Array.isArray(data.nomor_plat)){
+            platFormatted = data.nomor_plat.map(p=>p.trim()).join("<br>");
+        }else{
+            platFormatted = data.nomor_plat.split(",").map(p=>p.trim()).join("<br>");
+        }
     }
-  });
-  if(dataExport.length===0){ alert("Tidak ada data untuk export"); return; }
-  const worksheet=XLSX.utils.json_to_sheet(dataExport);
-  const workbook=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook,worksheet,"Data_Pengajuan");
-  XLSX.writeFile(workbook,"Data_Pengajuan.xlsx");
+
+    let statusAdmin = data.status_admin==="Sudah"
+        ? "<span class='status-sudah'>Sudah</span>"
+        : "<span class='status-baru'>Belum</span>";
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+        <td>${data.jenis_pengajuan||''}</td>
+        <td>${data.nama||''}</td>
+        <td>${data.departement||''}</td>
+        <td>${platFormatted}</td>
+        <td>${data.jenis_kendaraan||''}</td>
+        <td>${data.periode_awal||''} s/d ${data.periode_akhir||''}</td>
+        <td>${data.keterangan||''}</td>
+        <td>${statusText}</td>
+        <td>${statusAdmin}</td>
+        <td>
+            ${data.status_admin==="Sudah"?"":`<button class="btn btn-sudah" onclick="tandaiSudah('${id}')">Sudah Input</button>`}
+            <button class="btn btn-hapus" onclick="hapusData('${id}')">Hapus</button>
+        </td>
+    `;
+    tableBody.appendChild(tr);
+}
+
+function tandaiSudah(id){
+    db.collection("pengajuan").doc(id).update({status_admin:"Sudah"});
+}
+
+function hapusData(id){
+    if(confirm("Yakin hapus data?")){
+        db.collection("pengajuan").doc(id).delete();
+    }
+}
+
+function loadData(){
+    const filterNama = document.getElementById('filterNama').value.toLowerCase();
+    const filterDept = document.getElementById('filterDept').value.toLowerCase();
+    const filterPlat = document.getElementById('filterPlat').value.toLowerCase();
+    const filterStatus = document.getElementById('filterStatus').value;
+    const filterBulan = document.getElementById('filterBulan').value;
+
+    db.collection("pengajuan").orderBy("timestamp","desc").get().then(snapshot=>{
+        tableBody.innerHTML="";
+        let totalAktif=0;
+        let totalBelum=0;
+        const today = new Date();
+
+        if(snapshot.empty){
+            tableBody.innerHTML="<tr><td colspan='10'>Belum ada data</td></tr>";
+            totalAktifEl.textContent = 0;
+            totalBelumEl.textContent = 0;
+            return;
+        }
+
+        snapshot.forEach(doc=>{
+            const d = doc.data();
+            const awal = new Date(d.periode_awal);
+            const akhir = new Date(d.periode_akhir);
+
+            // Hitung total aktif & belum
+            if(today >= awal && today <= akhir) totalAktif++;
+            if(d.status_admin!=="Sudah") totalBelum++;
+
+            // Filter
+            if(filterNama && !d.nama.toLowerCase().includes(filterNama)) return;
+            if(filterDept && !d.departement.toLowerCase().includes(filterDept)) return;
+            if(filterPlat){
+                let platList = Array.isArray(d.nomor_plat)?d.nomor_plat:d.nomor_plat.split(",");
+                platList = platList.map(p=>p.trim().toLowerCase());
+                if(!platList.some(p=>p.includes(filterPlat))) return;
+            }
+            if(filterStatus){
+                let status = today >= awal && today <= akhir ? "Aktif" : today > akhir ? "Selesai" : "-";
+                if(status !== filterStatus) return;
+            }
+            if(filterBulan){
+                const blnAwal = d.periode_awal.substring(0,7);
+                if(blnAwal !== filterBulan) return;
+            }
+
+            renderRow(d, doc.id);
+        });
+
+        totalAktifEl.textContent = totalAktif;
+        totalBelumEl.textContent = totalBelum;
+    });
+}
+
+function exportExcel(){
+    const rows = document.querySelectorAll("#data-table tr");
+    if(rows.length===0){alert("Tidak ada data untuk di export"); return;}
+    let dataExport=[];
+    rows.forEach(row=>{
+        const cells=row.querySelectorAll("td");
+        if(cells.length>0){
+            dataExport.push({
+                Jenis:cells[0].innerText,
+                Nama:cells[1].innerText,
+                Departement:cells[2].innerText,
+                Plat:cells[3].innerText,
+                Kendaraan:cells[4].innerText,
+                Periode:cells[5].innerText,
+                Keterangan:cells[6].innerText,
+                Status:cells[7].innerText,
+                Status_Admin:cells[8].innerText
+            });
+        }
+    });
+    const worksheet=XLSX.utils.json_to_sheet(dataExport);
+    const workbook=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Data Pengajuan");
+    XLSX.writeFile(workbook,"Data_Pengajuan.xlsx");
 }
 
 loadData();

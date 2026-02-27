@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login Management</title>
+<title>Login</title>
 <style>
-body{font-family:Arial;background:#f4f6f9;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}
+body{font-family:Arial;background:#f4f6f9;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
 .login-box{background:white;padding:30px;border-radius:10px;box-shadow:0 4px 15px rgba(0,0,0,0.2);width:300px;}
 .login-box h2{text-align:center;margin-bottom:20px;}
 .login-box input{width:100%;padding:10px;margin-bottom:15px;border-radius:6px;border:1px solid #ccc;font-size:14px;}
@@ -16,7 +16,7 @@ body{font-family:Arial;background:#f4f6f9;display:flex;align-items:center;justif
 <body>
 
 <div class="login-box">
-<h2>Login Management</h2>
+<h2>Login</h2>
 <input type="text" id="username" placeholder="Username">
 <input type="password" id="password" placeholder="Password">
 <button id="loginBtn">Login</button>
@@ -49,31 +49,29 @@ document.getElementById("loginBtn").addEventListener("click", async ()=>{
   if(!usernameInput || !passwordInput) return showPopup("Isi username dan password");
 
   try{
-    // Ambil semua dokumen di collection 'users'
-    const snapshot = await db.collection("users").get();
-    if(snapshot.empty) return showPopup("Tidak ada user di database");
+    // Ambil dokumen sesuai usernameInput sebagai ID
+    const docRef = db.collection("users").doc(usernameInput);
+    const docSnap = await docRef.get();
 
-    let userFound = null;
-    snapshot.forEach(doc=>{
-      const d = doc.data();
-      if(d.username === usernameInput){
-        userFound = d;
-      }
-    });
+    if(!docSnap.exists){
+      return showPopup("Username tidak ditemukan");
+    }
 
-    if(!userFound) return showPopup("Username tidak ditemukan");
-    if(userFound.password !== passwordInput) return showPopup("Password salah");
+    const userData = docSnap.data();
+    if(userData.password !== passwordInput){
+      return showPopup("Password salah");
+    }
 
     // Simpan session
-    localStorage.setItem("userSession", JSON.stringify(userFound));
+    localStorage.setItem("userSession", JSON.stringify(userData));
 
-    // Arahkan sesuai role
-    if(userFound.role.toLowerCase() === "management"){
+    // Redirect berdasarkan role
+    if(userData.role.toLowerCase() === "management"){
       window.location.href = "dashboard_management.html";
-    } else if(userFound.role.toLowerCase() === "admin"){
+    } else if(userData.role.toLowerCase() === "admin"){
       window.location.href = "dashboard_admin.html";
     } else {
-      showPopup("Role tidak dikenal, hubungi admin");
+      showPopup("Role tidak dikenal");
     }
 
   }catch(err){

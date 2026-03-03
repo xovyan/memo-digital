@@ -3,192 +3,173 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Management</title>
+<title>Dashboard Ultimate</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-/* ===== Global ===== */
+/* Reset */
 * {margin:0; padding:0; box-sizing:border-box; font-family:'Roboto',sans-serif;}
-body {background:#f0f2f5;}
+body {display:flex; min-height:100vh; background:#f5f6fa; color:#222; transition:0.3s;}
 
-/* ===== Header ===== */
-header {
-  background: linear-gradient(135deg,#4e54c8,#8f94fb);
-  color:white;
-  padding:20px;
-  font-size:22px;
-  font-weight:bold;
-  text-align:center;
-  box-shadow:0 3px 10px rgba(0,0,0,0.2);
+/* Sidebar */
+.sidebar {
+    width:260px; background:linear-gradient(180deg,#4e54c8,#8f94fb);
+    color:white; display:flex; flex-direction:column; padding-top:30px;
+    box-shadow:2px 0 20px rgba(0,0,0,0.15); transition:0.3s;
 }
+.sidebar h2 {text-align:center; margin-bottom:40px; font-weight:800; font-size:22px; letter-spacing:1px;}
+.sidebar button {
+    background:none; border:none; color:white; padding:18px 25px; text-align:left;
+    font-size:15px; cursor:pointer; display:flex; align-items:center; gap:12px;
+    border-radius:8px; margin:5px; transition:0.3s;
+}
+.sidebar button i {font-style:normal; font-weight:bold; font-size:18px;}
+.sidebar button:hover, .sidebar button.active {background:rgba(255,255,255,0.2); transform:translateX(5px);}
 
-/* ===== Cards ===== */
-.cards {display:flex; gap:15px; flex-wrap:wrap; margin:15px;}
+/* Main content */
+.main {flex:1; padding:30px; display:flex; flex-direction:column; overflow-x:auto; transition:0.3s;}
+
+/* Cards */
+.cards {display:flex; flex-wrap:wrap; gap:25px; margin-bottom:35px;}
 .card {
-  flex:1;
-  min-width:200px;
-  background:white;
-  padding:20px;
-  border-radius:12px;
-  box-shadow:0 3px 10px rgba(0,0,0,0.1);
-  transition:0.3s;
+    flex:1; min-width:180px; background:linear-gradient(145deg,#fff,#e6e6ff);
+    padding:25px; border-radius:15px; box-shadow:0 10px 25px rgba(0,0,0,0.1);
+    transition:0.4s; text-align:center; position:relative;
 }
-.card:hover {transform:translateY(-5px);}
-.card h3 {font-size:16px; margin-bottom:10px; color:#4e54c8;}
-.card p {font-size:20px; font-weight:bold; color:#333;}
-
-/* ===== Tab Navigation ===== */
-nav {
-  display:flex;
-  background:white;
-  margin:15px;
-  border-radius:12px;
-  overflow:hidden;
-  box-shadow:0 3px 10px rgba(0,0,0,0.1);
+.card::after {
+    content:""; position:absolute; top:0; left:0; width:100%; height:100%;
+    border-radius:15px; pointer-events:none; background:linear-gradient(120deg,#ff80b5,#9089fc);
+    opacity:0; transition:0.5s;
 }
-nav button {
-  flex:1;
-  padding:12px;
-  border:none;
-  background:none;
-  font-weight:500;
-  color:#4e54c8;
-  cursor:pointer;
-  transition:0.3s;
-}
-nav button.active {background:#4e54c8; color:white;}
+.card:hover::after {opacity:0.1;}
+.card h3 {font-size:14px; color:#4e54c8; margin-bottom:14px; font-weight:500;}
+.card p {font-size:24px; font-weight:700; color:#222; transition:0.3s;}
 
-/* ===== Sections ===== */
-section {margin:15px;}
-section .tab {display:none;}
-section .tab.active {display:block;}
+/* Table */
+table {width:100%; border-collapse:collapse; border-radius:10px; overflow:hidden; background:white; box-shadow:0 10px 20px rgba(0,0,0,0.05);}
+th, td {padding:14px; border-bottom:1px solid #eee; text-align:center; font-size:14px;}
+th {background:#4e54c8; color:white; font-weight:600;}
+tr:hover {background:#f4f4ff; transition:0.3s;}
+.status-aktif {color:green; font-weight:700;}
+.status-selesai {color:gray; font-weight:700;}
+.status-sudah {color:blue; font-weight:700;}
+.status-baru {color:red; font-weight:700;}
 
-/* ===== Forms ===== */
+/* Tabs */
+.tab {display:none;}
+.tab.active {display:block;}
+
+/* Forms */
 form input, form select, form textarea, form button {
-  width:100%;
-  padding:12px;
-  margin-bottom:10px;
-  border-radius:8px;
-  border:1px solid #ccc;
-  font-size:14px;
+    width:100%; padding:14px; margin-bottom:14px; border-radius:10px; border:1px solid #ccc; font-size:14px;
+    transition:0.3s;
 }
-form button {background:#4e54c8; color:white; font-weight:bold; border:none; cursor:pointer;}
-form button:hover {background:#3b3f9a;}
+form input:focus, form select:focus, form textarea:focus {border-color:#4e54c8; outline:none; box-shadow:0 0 8px rgba(78,84,200,0.3);}
+form button {background:#4e54c8; color:white; border:none; cursor:pointer; font-weight:600; transition:0.3s;}
+form button:hover {background:#3b3f9a; transform:translateY(-2px);}
 
-/* ===== Nopol ===== */
-.nopol-group {display:flex; gap:5px; margin-bottom:5px; align-items:center;}
-.nopol-group input {flex:1;}
-.nopol-group button {background:red; color:white; border:none; border-radius:6px; width:30px; height:30px; cursor:pointer; font-size:16px;}
+/* Search Input */
+#cariFilter {padding:12px; width:100%; border-radius:8px; border:1px solid #ccc; margin-bottom:15px; transition:0.3s;}
+#cariFilter:focus {border-color:#4e54c8; box-shadow:0 0 8px rgba(78,84,200,0.3);}
 
-/* ===== Table ===== */
-table {width:100%; border-collapse:collapse; margin-top:15px; font-size:13px; background:white; border-radius:10px; overflow:hidden;}
-th, td {border:1px solid #ccc; padding:8px; text-align:center;}
-th {background:#4e54c8; color:white;}
-.status-baru {color:red; font-weight:bold;}
-.status-sudah {color:green; font-weight:bold;}
-
-/* ===== Popup ===== */
-.popup {position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#16a34a; color:white; padding:12px 20px; border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,0.2); display:none; z-index:999;}
+/* Responsive */
+@media (max-width:1000px){
+    body {flex-direction:column;}
+    .sidebar {width:100%; flex-direction:row; overflow-x:auto; padding-top:10px;}
+    .sidebar h2 {display:none;}
+    .sidebar button {flex:1; text-align:center; margin:2px;}
+    .cards {flex-direction:column;}
+}
 </style>
 </head>
 <body>
 
-<header>Dashboard Management</header>
-
-<!-- Summary Cards -->
-<div class="cards">
-  <div class="card">
-    <h3>Total Pengajuan</h3>
-    <p id="totalPengajuan">0</p>
-  </div>
-  <div class="card">
-    <h3>Total Belum Input</h3>
-    <p id="totalBelumCard">0</p>
-  </div>
-  <div class="card">
-    <h3>Nama User</h3>
-    <p id="namaUser">-</p>
-  </div>
+<!-- Sidebar -->
+<div class="sidebar">
+    <h2>SUPER DASH</h2>
+    <button class="tab-btn active" data-tab="home"><i>🏠</i> Beranda</button>
+    <button class="tab-btn" data-tab="pengajuan"><i>📋</i> Pengajuan</button>
+    <button class="tab-btn" data-tab="riwayat"><i>📝</i> Riwayat</button>
+    <button class="tab-btn" data-tab="ganti"><i>🔒</i> Ganti Password</button>
+    <button class="tab-btn" data-tab="logout"><i>🚪</i> Logout</button>
 </div>
 
-<nav>
-  <button class="tab-btn active" data-tab="pengajuan">Pengajuan</button>
-  <button class="tab-btn" data-tab="riwayat">Riwayat</button>
-  <button class="tab-btn" data-tab="ganti">Ganti Password</button>
-  <button class="tab-btn" data-tab="logout">Logout</button>
-</nav>
+<!-- Main Content -->
+<div class="main">
 
-<section>
-<div class="popup" id="popup">Data berhasil dikirim ✅</div>
+    <!-- Home Cards -->
+    <div class="tab active" id="home">
+        <div class="cards">
+            <div class="card"><h3>Total Free Parkir (LSG) Aktif</h3><p id="totalAktif">0</p></div>
+            <div class="card"><h3>Total Belum Diinput</h3><p id="totalBelumCard">0</p></div>
+            <div class="card"><h3>Total Status Aktif</h3><p id="totalStatusAktif">0</p></div>
+            <div class="card"><h3>Total Compliment Aktif</h3><p id="totalCompliment">0</p></div>
+            <div class="card"><h3>Nama User</h3><p id="namaUser">-</p></div>
+        </div>
+    </div>
 
-<!-- PENGAJUAN -->
-<div class="tab active" id="pengajuan">
-<form id="formPengajuan" autocomplete="off">
-<select name="jenis_pengajuan" required>
-<option value="">-- Pilih Jenis --</option>
-<option value="Free Parkir">Free Parkir</option>
-<option value="Compliment">Compliment</option>
-<option value="Ubah Plat">Ubah Plat</option>
-</select>
-<input type="text" name="nama" placeholder="Nama" required>
-<input type="text" name="departement" placeholder="Departement" required>
-<div id="nopolContainer"></div>
-<button type="button" id="addNopol">+ Tambah Plat</button>
-<input type="text" name="jenis_kendaraan" placeholder="Jenis Kendaraan">
-<input type="date" name="periode_awal" required>
-<input type="date" name="periode_akhir" required>
-<textarea name="keterangan" placeholder="Keterangan"></textarea>
-<button type="submit" id="btnKirim">Kirim</button>
-</form>
+    <!-- Riwayat -->
+    <div class="tab" id="riwayat">
+        <input type="text" id="cariFilter" placeholder="Cari di semua kolom...">
+        <button onclick="exportExcel()" style="margin-bottom:12px; padding:12px 20px; border-radius:8px;">Export Excel</button>
+        <table>
+            <thead>
+                <tr>
+                    <th>Jenis</th>
+                    <th>Nama</th>
+                    <th>Dept</th>
+                    <th>Plat</th>
+                    <th>Kendaraan</th>
+                    <th>Periode</th>
+                    <th>Keterangan</th>
+                    <th>Masa Free</th>
+                    <th>Status Admin</th>
+                </tr>
+            </thead>
+            <tbody id="riwayatData"></tbody>
+        </table>
+    </div>
+
+    <!-- Pengajuan -->
+    <div class="tab" id="pengajuan">
+        <form id="formPengajuan" autocomplete="off">
+            <select name="jenis_pengajuan" required>
+                <option value="">-- Pilih Jenis --</option>
+                <option value="Free Parkir">Free Parkir</option>
+                <option value="Compliment">Compliment</option>
+                <option value="Ubah Plat">Ubah Plat</option>
+            </select>
+            <input type="text" name="nama" placeholder="Nama" required>
+            <input type="text" name="departement" placeholder="Departement" required>
+            <div id="nopolContainer"></div>
+            <button type="button" id="addNopol">+ Tambah Plat</button>
+            <input type="text" name="jenis_kendaraan" placeholder="Jenis Kendaraan">
+            <input type="date" name="periode_awal" required>
+            <input type="date" name="periode_akhir" required>
+            <textarea name="keterangan" placeholder="Keterangan"></textarea>
+            <button type="submit">Kirim</button>
+        </form>
+    </div>
+
+    <!-- Ganti Password -->
+    <div class="tab" id="ganti">
+        <form>
+            <input type="password" placeholder="Password Lama">
+            <input type="password" placeholder="Password Baru">
+            <button type="submit">Ganti Password</button>
+        </form>
+    </div>
+
+    <!-- Logout -->
+    <div class="tab" id="logout">
+        <button onclick="logout()" style="padding:12px 18px; border-radius:8px;">Keluar</button>
+    </div>
 </div>
 
-<!-- RIWAYAT -->
-<div class="tab" id="riwayat">
-<div class="filter-area">
-<input type="text" id="cariFilter" placeholder="Cari Nama/Dept/Plat/Status">
-<input type="month" id="bulanFilter">
-<button onclick="loadRiwayat()">Filter</button>
-<button onclick="exportExcel()">Export Excel</button>
-</div>
-<div class="total-belum">Total Belum Input: <span id="totalBelum">0</span></div>
-<table>
-<thead>
-<tr>
-<th>Jenis</th>
-<th>Nama</th>
-<th>Dept</th>
-<th>Plat</th>
-<th>Kendaraan</th>
-<th>Periode</th>
-<th>Keterangan</th>
-<th>Status</th>
-</tr>
-</thead>
-<tbody id="riwayatData"></tbody>
-</table>
-</div>
-
-<!-- GANTI PASSWORD -->
-<div class="tab" id="ganti">
-<form id="formGantiPassword">
-<input type="password" id="passwordLama" placeholder="Password Lama" required>
-<input type="password" id="passwordBaru" placeholder="Password Baru" required>
-<button type="submit">Ganti Password</button>
-</form>
-</div>
-
-<!-- LOGOUT -->
-<div class="tab" id="logout">
-<button onclick="logout()">Keluar</button>
-</div>
-
-</section>
-
+<!-- Firebase & JS -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
 <script>
-// ===== Firebase config =====
 const firebaseConfig = {
   apiKey: "AIzaSyCaPM6CNaiK-VZYR0-dkrrYMANiWi8pUGw",
   authDomain: "memodigital-57c0c.firebaseapp.com",
@@ -197,167 +178,112 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// ===== SESSION CHECK =====
-const username = sessionStorage.getItem("username");
-const role = sessionStorage.getItem("role");
-if(!username || role !== "management"){ alert("Silahkan login terlebih dahulu!"); window.location.href="login.html"; }
-document.getElementById("namaUser").textContent=username;
-
-// ===== TAB NAV =====
+// Sidebar Tabs
 document.querySelectorAll(".tab-btn").forEach(btn=>{
-  btn.onclick=()=>{
-    document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
-    btn.classList.add("active");
-    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-    document.getElementById(btn.dataset.tab).classList.add("active");
-  };
+    btn.onclick=()=>{
+        document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+        document.getElementById(btn.dataset.tab).classList.add("active");
+    };
 });
 
-// ===== NOPOL =====
-const nopolContainer=document.getElementById("nopolContainer");
-function createNopol(){
-  const div=document.createElement("div");
-  div.className="nopol-group";
-  div.innerHTML=`<input type="text" name="nomor_plat[]" required>
-  <button type="button">×</button>`;
-  div.querySelector("button").onclick=()=>{
-    if(document.querySelectorAll('[name="nomor_plat[]"]').length>1) div.remove();
-  };
-  return div;
-}
-function resetNopol(){ nopolContainer.innerHTML=""; nopolContainer.appendChild(createNopol()); }
-resetNopol();
-document.getElementById("addNopol").onclick=()=>nopolContainer.appendChild(createNopol());
+// Logout
+function logout(){ sessionStorage.clear(); window.location.href="login_management.html"; }
 
-// ===== SUBMIT PENGAJUAN =====
-document.getElementById("formPengajuan").addEventListener("submit", async function(e){
-  e.preventDefault();
-  const btn=document.getElementById("btnKirim");
-  btn.disabled=true;
-
-  const formData=new FormData(this);
-  let nomor_plat=[];
-  document.querySelectorAll('[name="nomor_plat[]"]').forEach(i=>{
-    if(i.value.trim()!=="") nomor_plat.push(i.value.trim());
-  });
-  if(nomor_plat.length===0){ btn.disabled=false; return; }
-
-  await db.collection("pengajuan").add({
-    ...Object.fromEntries(formData.entries()),
-    nomor_plat: nomor_plat,
-    status_admin_per_plat: nomor_plat.map(()=> "Belum"),
-    timestamp:firebase.firestore.FieldValue.serverTimestamp()
-  });
-
-  this.reset();
-  resetNopol();
-  window.scrollTo({top:0, behavior:"smooth"});
-  const popup=document.getElementById("popup");
-  popup.style.display="block";
-  setTimeout(()=>popup.style.display="none",2000);
-  btn.disabled=false;
+// Add Nopol
+document.getElementById("addNopol").addEventListener("click", function(){
+    const div=document.createElement("div");
+    div.className="nopol-group";
+    div.innerHTML=`
+        <input type="text" name="nomor_plat" placeholder="Nomor Plat" required>
+        <button type="button" onclick="this.parentElement.remove()">X</button>
+    `;
+    document.getElementById("nopolContainer").appendChild(div);
 });
+document.getElementById("addNopol").click();
 
-// ===== RIWAYAT =====
-let riwayatSnapshot=null;
-function loadRiwayat(){
-  const cari=document.getElementById("cariFilter").value.toLowerCase();
-  const bulan=document.getElementById("bulanFilter").value;
-
-  if(riwayatSnapshot) riwayatSnapshot();
-
-  riwayatSnapshot=db.collection("pengajuan").orderBy("timestamp","desc")
-  .onSnapshot(snapshot=>{
-    const tbody=document.getElementById("riwayatData");
-    tbody.innerHTML="";
-    let totalBelum=0;
-
-    snapshot.forEach(doc=>{
-      const d=doc.data();
-      let daftarPlat=Array.isArray(d.nomor_plat)?d.nomor_plat:d.nomor_plat?[d.nomor_plat]:[];
-      let statusPlat=Array.isArray(d.status_admin_per_plat)?d.status_admin_per_plat:daftarPlat.map(()=> "Belum");
-      let awalBln=d.periode_awal?.substring(0,7) || "";
-
-      daftarPlat.forEach((plat,index)=>{
-        let match=true;
-        if(cari){
-          match = [d.nama,d.departement,plat,statusPlat[index]].some(v=>String(v).toLowerCase().includes(cari));
-        }
-        if(bulan && bulan!==awalBln) match=false;
-
-        if(match){
-          tbody.innerHTML+=`
-          <tr>
-          <td>${d.jenis_pengajuan||""}</td>
-          <td>${d.nama||""}</td>
-          <td>${d.departement||""}</td>
-          <td>${plat||""}</td>
-          <td>${d.jenis_kendaraan||""}</td>
-          <td>${d.periode_awal||""} s/d ${d.periode_akhir||""}</td>
-          <td>${d.keterangan||""}</td>
-          <td>${statusPlat[index]==="Sudah"?'<span class="status-sudah">Sudah</span>':'<span class="status-baru">Belum</span>'}</td>
-          </tr>`;
-        }
-
-        if(statusPlat[index]==="Belum") totalBelum++;
-      });
-    });
-    document.getElementById("totalBelum").textContent=totalBelum;
-    document.getElementById("totalBelumCard").textContent=totalBelum;
-    document.getElementById("totalPengajuan").textContent=snapshot.size;
-  });
-}
-loadRiwayat();
-
-// ===== EXPORT EXCEL =====
+// Export Excel
 function exportExcel(){
-  let dataExport=[];
-  document.querySelectorAll("#riwayatData tr").forEach(row=>{
-    const cells=row.querySelectorAll("td");
-    if(cells.length>0){
-      dataExport.push({
-        Jenis:cells[0].innerText,
-        Nama:cells[1].innerText,
-        Departement:cells[2].innerText,
-        Plat:cells[3].innerText,
-        Kendaraan:cells[4].innerText,
-        Periode:cells[5].innerText,
-        Keterangan:cells[6].innerText,
-        Status:cells[7].innerText
-      });
-    }
-  });
-  if(dataExport.length===0){ alert("Tidak ada data untuk di export"); return; }
-  const worksheet=XLSX.utils.json_to_sheet(dataExport);
-  const workbook=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook,worksheet,"Riwayat");
-  XLSX.writeFile(workbook,"Riwayat_Pengajuan.xlsx");
+    const table=document.querySelector("#riwayat table");
+    const wb=XLSX.utils.table_to_book(table,{sheet:"Riwayat"});
+    XLSX.writeFile(wb,"Data_Riwayat.xlsx");
 }
 
-// ===== GANTI PASSWORD =====
-document.getElementById("formGantiPassword").addEventListener("submit", async function(e){
-  e.preventDefault();
-  const lama = document.getElementById("passwordLama").value.trim();
-  const baru = document.getElementById("passwordBaru").value.trim();
-  if(!lama || !baru){ alert("Isi semua field!"); return; }
+// Load Data
+const riwayatBody = document.getElementById('riwayatData');
+const totalAktifEl = document.getElementById('totalAktif');
+const totalBelumEl = document.getElementById('totalBelumCard');
+const totalComplimentEl = document.getElementById('totalCompliment');
+const totalStatusAktifEl = document.getElementById('totalStatusAktif');
+let dataGlobal = [];
 
-  try{
-    const querySnapshot = await db.collection("users").where("username","==",username).get();
-    if(querySnapshot.empty){ alert("User tidak ditemukan!"); return; }
-    const doc = querySnapshot.docs[0];
-    const data = doc.data();
-    if(data.password !== lama){ alert("Password lama salah!"); return; }
-    await db.collection("users").doc(doc.id).update({ password: baru });
-    alert("Password berhasil diubah!");
-    this.reset();
-  }catch(err){ console.error(err); alert("Terjadi kesalahan!"); }
+function renderRow(data, plat, statusAdmin){
+    const today = new Date();
+    const awal = new Date(data.periode_awal);
+    const akhir = new Date(data.periode_akhir);
+    let masaFree = (today>=awal && today<=akhir) ? "<span class='status-aktif'>Aktif</span>" : "<span class='status-selesai'>Selesai</span>";
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+        <td>${data.jenis_pengajuan||''}</td>
+        <td>${data.nama||''}</td>
+        <td>${data.departement||''}</td>
+        <td>${plat||''}</td>
+        <td>${data.jenis_kendaraan||''}</td>
+        <td>${data.periode_awal||''} s/d ${data.periode_akhir||''}</td>
+        <td>${data.keterangan||''}</td>
+        <td>${masaFree}</td>
+        <td>${statusAdmin==="Sudah"?'<span class="status-sudah">Sudah</span>':'Belum'}</td>
+    `;
+    riwayatBody.appendChild(tr);
+}
+
+function loadData(){
+    riwayatBody.innerHTML="";
+    dataGlobal=[];
+    let totalAktif=0, totalBelum=0, totalCompliment=0, totalStatusAktif=0;
+    const today = new Date();
+    db.collection("pengajuan").orderBy("timestamp","desc").get().then(snapshot=>{
+        if(snapshot.empty){
+            riwayatBody.innerHTML="<tr><td colspan='9'>Belum ada data</td></tr>";
+            totalAktifEl.textContent=0;
+            totalBelumEl.textContent=0;
+            totalComplimentEl.textContent=0;
+            totalStatusAktifEl.textContent=0;
+            return;
+        }
+        snapshot.forEach(doc=>{
+            const d = doc.data();
+            const platArray = Array.isArray(d.nomor_plat)?d.nomor_plat:[d.nomor_plat];
+            const statusArray = Array.isArray(d.status_admin_per_plat)?d.status_admin_per_plat:platArray.map(p=>"Belum");
+            platArray.forEach((plat,i)=>{
+                renderRow(d, plat, statusArray[i]);
+                if(today>=new Date(d.periode_awal) && today<=new Date(d.periode_akhir)) totalAktif++;
+                if(statusArray[i]!=="Sudah") totalBelum++;
+                if(d.jenis_pengajuan==="Compliment" && statusArray[i]!=="Sudah") totalCompliment++;
+                if(today>=new Date(d.periode_awal) && today<=new Date(d.periode_akhir)) totalStatusAktif++;
+            });
+            dataGlobal.push({id:doc.id, ...d, platArray, statusArray});
+        });
+        totalAktifEl.textContent=totalAktif;
+        totalBelumEl.textContent=totalBelum;
+        totalComplimentEl.textContent=totalCompliment;
+        totalStatusAktifEl.textContent=totalStatusAktif;
+        document.getElementById('namaUser').textContent = sessionStorage.getItem('username') || '-';
+    });
+}
+
+loadData();
+
+// Global Filter
+document.getElementById('cariFilter').addEventListener('input', function(){
+    const val=this.value.toLowerCase();
+    riwayatBody.querySelectorAll('tr').forEach(tr=>{
+        const text=tr.textContent.toLowerCase();
+        tr.style.display = text.includes(val)?'':'none';
+    });
 });
-
-// ===== LOGOUT =====
-function logout(){
-  sessionStorage.clear();
-  window.location.href="login.html";
-}
 </script>
+
 </body>
 </html>

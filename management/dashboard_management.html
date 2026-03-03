@@ -283,7 +283,65 @@ document.getElementById('cariFilter').addEventListener('input', function(){
         tr.style.display = text.includes(val)?'':'none';
     });
 });
-</script>
 
+// --- Form Pengajuan Submit ---
+const formPengajuan = document.getElementById('formPengajuan');
+
+// Buat popup
+const popup = document.createElement('div');
+popup.id = 'popup';
+popup.style.position = 'fixed';
+popup.style.top = '20px';
+popup.style.left = '50%';
+popup.style.transform = 'translateX(-50%)';
+popup.style.background = '#16a34a';
+popup.style.color = 'white';
+popup.style.padding = '12px 20px';
+popup.style.borderRadius = '8px';
+popup.style.display = 'none';
+popup.style.zIndex = '999';
+popup.innerText = 'Data berhasil dikirim ✅';
+document.body.appendChild(popup);
+
+formPengajuan.addEventListener('submit', async function(e){
+    e.preventDefault();
+    const jenis_pengajuan = formPengajuan.jenis_pengajuan.value;
+    const nama = formPengajuan.nama.value;
+    const departement = formPengajuan.departement.value;
+    const jenis_kendaraan = formPengajuan.jenis_kendaraan.value;
+    const periode_awal = formPengajuan.periode_awal.value;
+    const periode_akhir = formPengajuan.periode_akhir.value;
+    const keterangan = formPengajuan.keterangan.value;
+
+    // Ambil semua plat
+    const nopolEls = document.querySelectorAll('#nopolContainer input[name="nomor_plat"]');
+    const nomor_plat = Array.from(nopolEls).map(input=>input.value);
+
+    // Buat status admin per plat
+    const status_admin_per_plat = nomor_plat.map(p=>"Belum");
+
+    try {
+        await db.collection('pengajuan').add({
+            jenis_pengajuan, nama, departement, jenis_kendaraan, periode_awal, periode_akhir,
+            keterangan, nomor_plat, status_admin_per_plat,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Reset form
+        formPengajuan.reset();
+        document.getElementById('nopolContainer').innerHTML = '';
+        document.getElementById('addNopol').click();
+
+        // Tampilkan popup
+        popup.style.display = 'block';
+        setTimeout(()=>popup.style.display='none', 3000);
+
+        // Reload data
+        loadData();
+    } catch(err){
+        alert('Gagal mengirim data: '+err);
+    }
+});
+</script>
 </body>
 </html>
